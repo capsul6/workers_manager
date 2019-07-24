@@ -1,0 +1,54 @@
+.form-group {
+    text-align: center;
+}
+
+.login_menu {
+    border-radius: 8px;
+    background: linear-gradient(to top left, #000080, #b30000);
+    width: 100%;
+}
+
+.head {
+    position: absolute;
+    width: 100%;
+    top: 0;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0px 40px 0px 40px;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.form-group label {
+    color: white;
+}
+
+form {
+    width: 50%;
+}
+
+
+#login_button {
+    width: 100%;
+}
+
+#registration_button {
+    margin-top: 10px;
+    width: 100%;
+}
+
+h3:hover {
+    color: navy;
+}
+
+.login_menu {
+    margin: 0;
+    padding: 20px 0 20px 0;
+}
