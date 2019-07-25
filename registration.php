@@ -1,6 +1,8 @@
 <?php
  require("db_files/connection.php");
 
+//define connection
+$connection = new mysqli($host, $user, $password, $database);
 
  function inputValidate(string $text) {
      $text = trim($text);
@@ -14,7 +16,8 @@
  $errors = array("login_errors" => array("empty" => "логін не може бути пустим",
                                          "more_than_thirty_symbols" => "логін не може бути довше 30 символів",
                                          "less_than_three_symbols" => "логін не може бути коротшим за 3 символи",
-                                         "incorrect_type_of_chars" => "логін повинен складатися з букв та/або цифр"),
+                                         "incorrect_type_of_chars" => "логін повинен складатися з букв та/або цифр",
+                                         "already_exist" => "користувач з таким логіном вже існує"),
 
                  "password_errors" => array("empty" => "пароль не може бути пустим",
                                             "less_than_three_symbols" => "пароль не може бути коротшим за 3 символи",
@@ -27,10 +30,26 @@
 
                  "email_errors" => array("empty" => "емейл не може бути пустим",
                                          "don`t_contain_symbol" => "це не схоже на емейл адресу",
-                                         )
+                                         "already_exist" => "користувач з таким емейлом вже існує")
  );
 
  if(isset($_POST['reg_button'])) {
+
+     //get data from db and check for repeat
+
+     if(!empty($_POST['login'])) {
+         $query = "SELECT login FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
+         $loginFromForm = $connection->query($query);
+         if (!$loginFromForm) die ($connection->error);
+
+         if ($loginFromForm->num_rows > 0) {
+             while ($row = $loginFromForm->fetch_assoc()) {
+                 if (inputValidate($_POST['login']) == $row['login']) {
+                     $loginErrors = $errors['login_errors']['already_exist'];
+                 }
+             }
+         }
+     }
 
      //verify login input
 
@@ -56,6 +75,7 @@
          $loginErrors = $errors['login_errors']['incorrect_type_of_chars'];
 
      };
+
 
      ///verify password input
 
@@ -84,32 +104,54 @@
      };
 
 
+
+     //check password verify for conformity "email" and "email password"
      if (inputValidate($_POST['password_verify']) !== inputValidate($_POST['password'])){
          $repeatPasswordErrors = $errors['password_verify_errors']['don`t_found'];
-     }
 
-     //check for non empty
-     if (inputValidate($_POST['password_verify']) == ""){
+         //check for non empty
+     } elseif (inputValidate($_POST['password_verify']) == ""){
          $repeatPasswordErrors = $errors['password_verify_errors']['empty'];
      };
 
-      ///check for matching
+
+      //check email for non empty
      if (inputValidate($_POST['email']) == "") {
          $emailErrors = $errors['email_errors']['empty'];
      }
 
-     $login = inputValidate($_POST['login']);
-     $password1 = inputValidate($_POST['password']);
-     $email = inputValidate($_POST['email']);
+     //check for correct symbols in email input
+     if(!filter_var(inputValidate($_POST['email']), FILTER_VALIDATE_EMAIL)) {
+         $emailErrors = $errors['email_errors']['don`t_contain_symbol'];
+     }
+
+     $email12 = inputValidate($_POST['email']);
+
+     //get data from db for "already exist" error check
+     if(!empty($_POST['email'])) {
+         $query = "SELECT email FROM users WHERE email = " . "'" . $email12 . "';";
+         $emailFromForm = $connection->query($query);
+         if (!$emailFromForm) die ($connection->error);
+
+         if ($emailFromForm->num_rows > 0) {
+             while ($row = $emailFromForm->fetch_assoc()) {
+                 if (inputValidate($_POST['email']) == $row['email']) {
+                     $emailErrors = $errors['email_errors']['already_exist'];
+                 }
+             }
+         }
+     }
+
 
     if (empty($loginErrors) && empty($loginErrors)&& empty($repeatPasswordErrors)&& empty($emailErrors)) {
 
-        $connection = new mysqli($host, $user, $password, $database);
-        $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . $login . "'," . "'" . $password1 . "',"  . "'" . $email . "');" ;
+        $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . inputValidate($_POST['login']) . "'," . "'" . inputValidate($_POST['password']) . "',"  . "'" . inputValidate($_POST['email']) . "');" ;
+
         if($connection->query($query) == true) {
+            $connection->close();
             header('Location: http://localhost/ddz_info/index.php');
         }
-        $connection->close();
+
     }
  }
 
@@ -134,7 +176,12 @@
 
     <ul class="d-flex justify-content-between align-items-center">
         <li><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-        <li> <span class="text-info">Доброго дня Олег</span> <a href="index.php"><button type="button" class="btn btn-info">Вийти</button></a></li>
+        <?php if(!isset($_SESSION['login'])) {
+            echo '<li><span class="text-info">Ви не авторизовані </span><a href="index.php"><button type="button" class="btn btn-info">Авторизуватися</button></a></li>';
+    } else {
+            echo '<li><span class="text-info">Доброго дня ' . $_SESSION['login'] . ' </span><a href="logout.php"><button type="submit" class="btn btn-info">Вийти</button></a></li>';
+        }
+        ?>
     </ul>
 
 </nav>
@@ -154,11 +201,11 @@
         </div>
         <div class="form-group">
             <label for="Password">Пароль</label>
-            <input type="password" class="form-control" id="Password" placeholder="Пароль" name="password" maxlength="30" minlength="3"  value="<?php if(isset($_POST['password'])){echo $_POST['password'];}?>"><span class="text-warning"><?php echo $passwordErrors;?></span>
+            <input type="password" class="form-control" id="Password" placeholder="Пароль" name="password" maxlength="30" minlength="3"><span class="text-warning"><?php echo $passwordErrors;?></span>
         </div>
         <div class="form-group">
             <label for="Password_verify">Пароль ще раз</label>
-            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30" value="<?php if(isset($_POST['password_verify'])){echo $_POST['password_verify'];}?>"><span class="text-warning"><?php echo $repeatPasswordErrors;?></span>
+            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30"><span class="text-warning"><?php echo $repeatPasswordErrors;?></span>
         <div class="form-group">
             <label for="Email">Емейл (Якщо забудете пароль, ми надішлемо його на цю адресу)</label>
             <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>"><span class="text-warning"><?php echo $emailErrors;?></span>
