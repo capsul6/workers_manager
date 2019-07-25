@@ -4,4 +4,6 @@ $host = "localhost";
 $user = "root";
 $password = "";
 $database = "test";
+
+session_start();
 ?>
