@@ -59,7 +59,7 @@ $connection = new mysqli($host, $user, $password, $database);
 
          $loginErrors = $errors['login_errors']['empty'];
 
-         //check for length
+         //check for length no more than 30 symbols
      } elseif (inputValidate(mb_strlen($_POST['login'], "UTF-8")) > 30) {
 
          $loginErrors = $errors['login_errors']['more_than_thirty_symbols'];
@@ -145,13 +145,12 @@ $connection = new mysqli($host, $user, $password, $database);
 
     if (empty($loginErrors) && empty($loginErrors)&& empty($repeatPasswordErrors)&& empty($emailErrors)) {
 
-        $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . inputValidate($_POST['login']) . "'," . "'" . inputValidate($_POST['password']) . "',"  . "'" . inputValidate($_POST['email']) . "');" ;
+        $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . inputValidate($_POST['login']) . "'," . "'" . password_hash(inputValidate($_POST['password']), PASSWORD_DEFAULT) . "',"  . "'" . inputValidate($_POST['email']) . "');" ;
 
         if($connection->query($query) == true) {
             $connection->close();
             header('Location: http://localhost/ddz_info/index.php');
         }
-
     }
  }
 
@@ -159,6 +158,11 @@ $connection = new mysqli($host, $user, $password, $database);
 <!doctype html>
 <html lang="en">
 <head>
+
+    <?php if(isset($_POST[''])): ?>
+    <?php else: ?>
+    <?php endif;?>
+
     <title>Сторінка реєстрації</title>
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
@@ -197,23 +201,23 @@ $connection = new mysqli($host, $user, $password, $database);
     <form method="post" action="registration.php" class="mx-auto">
         <div class="form-group">
             <label for="Login">Логін</label>
-            <input type="text" class="form-control" id="Login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];}?>"><span class="text-warning"><?php echo $loginErrors;?></span>
+            <input type="text" class="form-control" id="Login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];}?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
+                Must be 8-20 characters long.
+            </small>
         </div>
         <div class="form-group">
             <label for="Password">Пароль</label>
-            <input type="password" class="form-control" id="Password" placeholder="Пароль" name="password" maxlength="30" minlength="3"><span class="text-warning"><?php echo $passwordErrors;?></span>
+            <input type="password" class="form-control" id="Password" placeholder="Пароль" name="password" maxlength="30" minlength="3"><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
         </div>
         <div class="form-group">
             <label for="Password_verify">Пароль ще раз</label>
-            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30"><span class="text-warning"><?php echo $repeatPasswordErrors;?></span>
-        <div class="form-group">
+            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30"><div class="text-warning input_warnings"><?php echo $repeatPasswordErrors;?></div>
+        </div>
+            <div class="form-group">
             <label for="Email">Емейл (Якщо забудете пароль, ми надішлемо його на цю адресу)</label>
-            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>"><span class="text-warning"><?php echo $emailErrors;?></span>
-
-
-
+            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>"><div class="text-warning input_warnings"><?php echo $emailErrors;?></div>
+            </div>
         <button id="registration_button" type="submit" class="btn btn-outline-success" name="reg_button" data-toggle="tooltip" data-placement="right" title="Натисніть, щоб зареєструватися">Зареєструватися</button>
-
     </form>
 
 </div>

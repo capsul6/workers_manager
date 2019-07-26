@@ -1,6 +1,82 @@
 <?php
 require 'db_files/connection.php';
 
+
+function inputValidate($text) {
+    $text = trim($text);
+    $text = substr($text,0,29);
+    return $text;
+}
+
+$loginErrors = $passwordErrors = "";
+
+
+$errors = array("login_errors" =>
+    array("empty" => "логін не може бути пустим",
+    "more_than_thirty_symbols" => "логін не може бути довше 30 символів",
+    "less_than_three_symbols" => "логін не може бути коротшим за 3 символи",
+    "already_exist" => "користувача з таким логіном не існує"),
+
+    "password_errors" =>
+        array("empty" => "пароль не може бути пустим",
+        "less_than_three_symbols" => "пароль не може бути коротшим за 3 символи",
+        "more_than_thirty_symbols" => "пароль не може бути довше 30 символів",
+        "password doesn't match login" => "неправильний пароль для цього логіну")
+);
+
+
+//check login input
+
+if(isset($_POST['login_button'])){
+
+//check login for non-empty
+    if(inputValidate($_POST['login']) == "") {
+      $loginErrors = $errors['login_errors']['empty'];
+
+      //check for length no more than 30 symbols
+    } elseif(mb_strlen(inputValidate($_POST['login']), "UTF-8") > 30){
+        $loginErrors = $errors['login_errors']['more_than_thirty_symbols'];
+
+        //check for length (less than 3 symbols)
+    } elseif (mb_strlen(inputValidate($_POST['login']), "UTF-8") < 3) {
+        $loginErrors = $errors['login_errors']['less_than_three_symbols'];
+    }
+
+    //get data from db and check is login already in db
+    $connection = new mysqli($host, $user, $password, $database);
+    if($connection->error) die($connection->error);
+    $query = "SELECT login FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
+    $loginFromDB = $connection->query($query);
+    if($loginFromDB->fetch_array(MYSQLI_ASSOC)['login'] != $_POST['login']) {
+        $loginErrors = $errors['login_errors']['already_exist'];
+    }
+
+
+ //check password input
+    if(inputValidate($_POST['password']) == "") {
+        $passwordErrors = $errors['password_errors']['empty'];
+
+        //check for length no more than 30 symbols
+    } elseif(mb_strlen(inputValidate($_POST['password']), "UTF-8") > 30){
+        $passwordErrors = $errors['password_errors']['more_than_thirty_symbols'];
+
+        //check for length (less than 3 symbols)
+    } elseif (mb_strlen(inputValidate($_POST['password']), "UTF-8") < 3) {
+        $passwordErrors = $errors['password_errors']['less_than_three_symbols'];
+    }
+
+    //get data from db and check is login with this password already in db
+    $connection = new mysqli($host, $user, $password, $database);
+    if($connection->error) die($connection->error);
+    $query = "SELECT login, password FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "'" . " AND password = " . "'" . inputValidate($_POST['password']) . "';";
+
+    $loginAndPasswordFromDB = $connection->query($query);
+    var_dump($loginAndPasswordFromDB->fetch_assoc()['password'] == inputValidate($_POST['password']) && $loginAndPasswordFromDB->fetch_assoc()['login'] == inputValidate($_POST['login']));
+    if($loginAndPasswordFromDB->fetch_assoc()['login'] == $_POST['login'] && $loginAndPasswordFromDB->fetch_assoc()['password'] == $_POST['password']) {
+
+        echo 'SUCCESS';
+    }
+}
 ?>
 <!doctype html>
 <html lang="en">
@@ -36,20 +112,21 @@ require 'db_files/connection.php';
 
     <form method="post" class="mx-auto">
         <div class="form-group">
-            <label for="exampleInputEmail1">Логін</label>
-            <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Введіть логін">
+            <label for="exampleInputLogin">Логін</label>
+            <input type="text" name="login" class="form-control" id="exampleInputLogin"  placeholder="Введіть логін" minlength="3" maxlength="303" value="<?php if(isset($_POST['login_button'])){echo $_POST['login'];}?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
         </div>
         <div class="form-group">
             <label for="exampleInputPassword1">Пароль</label>
-            <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Пароль">
+            <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Пароль" minlength="3" maxlength="30" name="password" value="<?php if(isset($_POST['login_button'])){echo $_POST['password'];}?>"><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
         </div>
         <div class="form-group form-check">
-            <input type="checkbox" class="form-check-input" id="exampleCheck1">
+            <input type="checkbox" class="form-check-input" id="exampleCheck1" name="remember_me">
             <label class="form-check-label" for="exampleCheck1">Запам'ятати мене</label>
         </div>
-        <button id="login_button" type="submit" class="btn btn-outline-danger" name="login" data-toggle="tooltip" data-placement="right" title="Увійдіть, якщо зареєстровані">Увійти</button>
 
-        <a href="registration.php"><button id="registration_button" type="button" class="btn btn-outline-primary" name="registration" data-toggle="tooltip" data-placement="right" title="Зареєструйтеся, якщо ще цього не зробили">Зареєструватися</button></a>
+        <button id="login_button" type="submit" class="btn btn-outline-danger" name="login_button" data-toggle="tooltip" data-placement="right" title="Увійдіть, якщо зареєстровані">Увійти</button>
+
+        <a href="registration.php"><button id="login_button" type="button" class="btn btn-outline-primary" name="login_button" data-toggle="tooltip" data-placement="right" title="Зареєструйтеся, якщо ще цього не зробили">Зареєструватися</button></a>
     </form>
 
 </div>

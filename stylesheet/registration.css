@@ -38,6 +38,10 @@ form {
     width: 50%;
 }
 
+.input_warnings {
+    height: 20px;
+}
+
 #registration_button {
     width: 100%;
     margin-top: 30px;
