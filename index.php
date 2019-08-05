@@ -1,10 +1,15 @@
+
 <?php
 require 'db_files/connection.php';
 
+if(isset($_COOKIE['login'])) {
+    header('Location: admin.php');
+}
 
 function inputValidate($text) {
     $text = trim($text);
     $text = substr($text,0,29);
+    $text = stripslashes($text);
     return $text;
 }
 
@@ -27,14 +32,14 @@ $errors = array("login_errors" =>
 
 //check login input
 
-if(isset($_POST['login_button'])){
+if(isset($_POST['login_button'])) {
 
 //check login for non-empty
-    if(inputValidate($_POST['login']) == "") {
-      $loginErrors = $errors['login_errors']['empty'];
+    if (inputValidate($_POST['login']) == "") {
+        $loginErrors = $errors['login_errors']['empty'];
 
-      //check for length no more than 30 symbols
-    } elseif(mb_strlen(inputValidate($_POST['login']), "UTF-8") > 30){
+        //check for length no more than 30 symbols
+    } elseif (mb_strlen(inputValidate($_POST['login']), "UTF-8") > 30) {
         $loginErrors = $errors['login_errors']['more_than_thirty_symbols'];
 
         //check for length (less than 3 symbols)
@@ -44,20 +49,21 @@ if(isset($_POST['login_button'])){
 
     //get data from db and check is login already in db
     $connection = new mysqli($host, $user, $password, $database);
-    if($connection->error) die($connection->error);
+    if ($connection->error) die($connection->error);
     $query = "SELECT login FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
-    $loginFromDB = $connection->query($query);
-    if($loginFromDB->fetch_array(MYSQLI_ASSOC)['login'] != $_POST['login']) {
+    $loginFromDB = $connection->query($query)->fetch_assoc();
+    $connection->close();
+    if ($loginFromDB['login'] != inputValidate($_POST['login'])) {
         $loginErrors = $errors['login_errors']['already_exist'];
     }
 
 
- //check password input
-    if(inputValidate($_POST['password']) == "") {
+    //check password input
+    if (inputValidate($_POST['password']) == "") {
         $passwordErrors = $errors['password_errors']['empty'];
 
         //check for length no more than 30 symbols
-    } elseif(mb_strlen(inputValidate($_POST['password']), "UTF-8") > 30){
+    } elseif (mb_strlen(inputValidate($_POST['password']), "UTF-8") > 30) {
         $passwordErrors = $errors['password_errors']['more_than_thirty_symbols'];
 
         //check for length (less than 3 symbols)
@@ -67,14 +73,40 @@ if(isset($_POST['login_button'])){
 
     //get data from db and check is login with this password already in db
     $connection = new mysqli($host, $user, $password, $database);
-    if($connection->error) die($connection->error);
-    $query = "SELECT login, password FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "'" . " AND password = " . "'" . inputValidate($_POST['password']) . "';";
+    $connection->set_charset("utf8");
+    if ($connection->error) die($connection->error);
+    $query = "SELECT login, password FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
 
     $loginAndPasswordFromDB = $connection->query($query);
-    var_dump($loginAndPasswordFromDB->fetch_assoc()['password'] == inputValidate($_POST['password']) && $loginAndPasswordFromDB->fetch_assoc()['login'] == inputValidate($_POST['login']));
-    if($loginAndPasswordFromDB->fetch_assoc()['login'] == $_POST['login'] && $loginAndPasswordFromDB->fetch_assoc()['password'] == $_POST['password']) {
+    $result = $loginAndPasswordFromDB->fetch_assoc();
+    $connection->close();
 
-        echo 'SUCCESS';
+    //check if all is ok
+    if($result['login'] == inputValidate($_POST['login']) && password_verify($_POST['password'], $result['password']) && empty($loginErrors)&& empty($passwordErrors)) {
+
+        //if all is ok set session
+        session_start();
+        $_SESSION['login'] = $result['login'];
+        $_SESSION['name'] = $result['name'];
+        $_SESSION['surname'] = $result['surname'];
+        //and send user to next page
+        header("Location: admin.php");
+
+        //if isset remember_me check_button, set cookies
+        if(isset($_POST['remember_me'])) {
+            setrawcookie('login', $result['login'], time() + (7 * 24 * 60 * 60));
+            setrawcookie('name', $result['name'], time() + (7 * 24 * 60 * 60));
+            setrawcookie('surname', $result['surname'], time() + (7 * 24 * 60 * 60));
+        }
+
+
+    //some check
+    } elseif (empty($loginErrors) && inputValidate($_POST['password']) == "") {
+        $passwordErrors = $errors['password_errors']['empty'];
+    }
+    // check if password dont matches login
+    elseif(!password_verify(inputValidate($_POST['password']), $result['password'])) {
+           $passwordErrors = $errors['password_errors']['password doesn\'t match login'];
     }
 }
 ?>
@@ -88,6 +120,8 @@ if(isset($_POST['login_button'])){
     <link href="stylesheet/index.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <meta charset="UTF-8">
 </head>
 
 <body>
@@ -96,7 +130,7 @@ if(isset($_POST['login_button'])){
 <header class="head">
     <nav>
 
-        <ul>
+        <ul class="d-flex align-items-center">
             <li><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
         </ul>
 
@@ -113,7 +147,7 @@ if(isset($_POST['login_button'])){
     <form method="post" class="mx-auto">
         <div class="form-group">
             <label for="exampleInputLogin">Логін</label>
-            <input type="text" name="login" class="form-control" id="exampleInputLogin"  placeholder="Введіть логін" minlength="3" maxlength="303" value="<?php if(isset($_POST['login_button'])){echo $_POST['login'];}?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
+            <input type="text" name="login" class="form-control" id="exampleInputLogin" autofocus="autofocus" placeholder="Введіть логін" minlength="3" maxlength="30" value="<?php if(isset($_POST['login_button'])){echo $_POST['login'];}?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
         </div>
         <div class="form-group">
             <label for="exampleInputPassword1">Пароль</label>
@@ -143,7 +177,6 @@ if(isset($_POST['login_button'])){
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         });
-
     };
 </script>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>

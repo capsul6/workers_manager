@@ -1,12 +1,26 @@
 
-
 .left_panel {
     padding: 0;
+}
+.nav_left a {
+    float: left;
+}
+
+.nav_right img{
+    height: 125px;
+    width: 125px;
+    max-height: 125px;
+    max-width: 125px;
+}
+
+.card-body {
+    padding: 5px!important;
 }
 
 nav ul {
     list-style: none;
     padding: 0px 40px 0px 40px;
+    margin-top: 16px!important;
 }
 
 .left_panel table {
@@ -20,7 +34,6 @@ nav ul {
 }
 
 .main_block {
-    margin-top: 50px;
     position: relative;
 }
 

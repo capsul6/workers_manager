@@ -3,12 +3,17 @@
 
 //define connection
 $connection = new mysqli($host, $user, $password, $database);
+$connection->set_charset("utf8");
 
- function inputValidate(string $text) {
+ function inputValidate($text) {
      $text = trim($text);
      $text = substr($text,0,29);
+     $text = stripslashes($text);
      return $text;
  }
+
+
+
 
  $loginErrors = $passwordErrors = $emailErrors = $repeatPasswordErrors = "";
 
@@ -36,7 +41,6 @@ $connection = new mysqli($host, $user, $password, $database);
  if(isset($_POST['reg_button'])) {
 
      //get data from db and check for repeat
-
      if(!empty($_POST['login'])) {
          $query = "SELECT login FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
          $loginFromForm = $connection->query($query);
@@ -49,6 +53,7 @@ $connection = new mysqli($host, $user, $password, $database);
                  }
              }
          }
+
      }
 
      //verify login input
@@ -128,9 +133,12 @@ $connection = new mysqli($host, $user, $password, $database);
      $email12 = inputValidate($_POST['email']);
 
      //get data from db for "already exist" error check
-     if(!empty($_POST['email'])) {
+     if(isset($_POST['email'])) {
          $query = "SELECT email FROM users WHERE email = " . "'" . $email12 . "';";
+
          $emailFromForm = $connection->query($query);
+
+
          if (!$emailFromForm) die ($connection->error);
 
          if ($emailFromForm->num_rows > 0) {
@@ -140,28 +148,26 @@ $connection = new mysqli($host, $user, $password, $database);
                  }
              }
          }
+
      }
 
 
     if (empty($loginErrors) && empty($loginErrors)&& empty($repeatPasswordErrors)&& empty($emailErrors)) {
 
-        $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . inputValidate($_POST['login']) . "'," . "'" . password_hash(inputValidate($_POST['password']), PASSWORD_DEFAULT) . "',"  . "'" . inputValidate($_POST['email']) . "');" ;
+        $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . inputValidate($_POST['login']) . "'," . "'" . password_hash($_POST['password'], PASSWORD_DEFAULT) . "',"  . "'" . inputValidate($_POST['email']) . "');" ;
 
         if($connection->query($query) == true) {
             $connection->close();
-            header('Location: http://localhost/ddz_info/index.php');
+            header('Location: index.php');
         }
     }
  }
+
 
  ?>
 <!doctype html>
 <html lang="en">
 <head>
-
-    <?php if(isset($_POST[''])): ?>
-    <?php else: ?>
-    <?php endif;?>
 
     <title>Сторінка реєстрації</title>
 
@@ -170,6 +176,8 @@ $connection = new mysqli($host, $user, $password, $database);
     <link href="stylesheet/registration.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <meta charset="UTF-8">
 </head>
 
 <body>
@@ -178,14 +186,8 @@ $connection = new mysqli($host, $user, $password, $database);
 <header class="head">
 <nav>
 
-    <ul class="d-flex justify-content-between align-items-center">
+    <ul class="d-flex align-items-center">
         <li><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-        <?php if(!isset($_SESSION['login'])) {
-            echo '<li><span class="text-info">Ви не авторизовані </span><a href="index.php"><button type="button" class="btn btn-info">Авторизуватися</button></a></li>';
-    } else {
-            echo '<li><span class="text-info">Доброго дня ' . $_SESSION['login'] . ' </span><a href="logout.php"><button type="submit" class="btn btn-info">Вийти</button></a></li>';
-        }
-        ?>
     </ul>
 
 </nav>
@@ -202,8 +204,6 @@ $connection = new mysqli($host, $user, $password, $database);
         <div class="form-group">
             <label for="Login">Логін</label>
             <input type="text" class="form-control" id="Login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];}?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
-                Must be 8-20 characters long.
-            </small>
         </div>
         <div class="form-group">
             <label for="Password">Пароль</label>
