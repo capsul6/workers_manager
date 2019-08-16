@@ -106,7 +106,7 @@ if(isset($_POST['login_button'])) {
     }
     // check if password dont matches login
     elseif(!password_verify(inputValidate($_POST['password']), $result['password'])) {
-           $passwordErrors = $errors['password_errors']['password doesn\'t match login'];
+           $passwordErrors = $errors['password_errors']['password dont match login'];
     }
 }
 ?>

@@ -2,8 +2,7 @@
  require("db_files/connection.php");
 
 //define connection
-$connection = new mysqli($host, $user, $password, $database);
-$connection->set_charset("utf8");
+$PDO_connection = new PDO($dsn, $user, $password, $opt);
 
  function inputValidate($text) {
      $text = trim($text);
@@ -12,11 +11,7 @@ $connection->set_charset("utf8");
      return $text;
  }
 
-
-
-
  $loginErrors = $passwordErrors = $emailErrors = $repeatPasswordErrors = "";
-
 
  $errors = array("login_errors" => array("empty" => "логін не може бути пустим",
                                          "more_than_thirty_symbols" => "логін не може бути довше 30 символів",
@@ -28,7 +23,6 @@ $connection->set_charset("utf8");
                                             "less_than_three_symbols" => "пароль не може бути коротшим за 3 символи",
                                             "more_than_thirty_symbols" => "пароль не може бути довше 30 символів",
                                             "incorrect_type_of_chars" => "пароль повинен складатися з букв та/або цифр"),
-
 
                  "password_verify_errors" => array("empty" => "повторний пароль не може бути пустим",
                                                    "don`t_found" => "повторний пароль не співпадає з основним"),
@@ -43,11 +37,11 @@ $connection->set_charset("utf8");
      //get data from db and check for repeat
      if(!empty($_POST['login'])) {
          $query = "SELECT login FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
-         $loginFromForm = $connection->query($query);
-         if (!$loginFromForm) die ($connection->error);
+         $PDO_connection->prepare("SELECT login FROM users WHERE login = ?");
+         $loginFromForm = $PDO_connection->query($query);
 
-         if ($loginFromForm->num_rows > 0) {
-             while ($row = $loginFromForm->fetch_assoc()) {
+         if ($loginFromForm->rowCount() > 0) {
+             while ($row = $loginFromForm->fetch(PDO::FETCH_ASSOC)) {
                  if (inputValidate($_POST['login']) == $row['login']) {
                      $loginErrors = $errors['login_errors']['already_exist'];
                  }
@@ -136,13 +130,10 @@ $connection->set_charset("utf8");
      if(isset($_POST['email'])) {
          $query = "SELECT email FROM users WHERE email = " . "'" . $email12 . "';";
 
-         $emailFromForm = $connection->query($query);
+         $emailFromForm = $PDO_connection->query($query);
 
-
-         if (!$emailFromForm) die ($connection->error);
-
-         if ($emailFromForm->num_rows > 0) {
-             while ($row = $emailFromForm->fetch_assoc()) {
+         if ($emailFromForm->rowCount() > 0) {
+             while ($row = $emailFromForm->fetch(PDO::FETCH_ASSOC)) {
                  if (inputValidate($_POST['email']) == $row['email']) {
                      $emailErrors = $errors['email_errors']['already_exist'];
                  }
@@ -156,8 +147,8 @@ $connection->set_charset("utf8");
 
         $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . inputValidate($_POST['login']) . "'," . "'" . password_hash($_POST['password'], PASSWORD_DEFAULT) . "',"  . "'" . inputValidate($_POST['email']) . "');" ;
 
-        if($connection->query($query) == true) {
-            $connection->close();
+        if($PDO_connection->exec($query) != 0) {
+            $PDO_connection = null;
             header('Location: index.php');
         }
     }

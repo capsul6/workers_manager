@@ -44,10 +44,6 @@ form {
     width: 100%;
 }
 
-h3:hover {
-    color: navy;
-}
-
 .login_menu {
     margin: 0;
     padding: 20px 0 20px 0;

@@ -1,0 +1,69 @@
+
+.left_panel {
+    padding: 0;
+}
+.nav_left a {
+    float: left;
+}
+
+.nav_right img{
+    height: 125px;
+    width: 125px;
+    max-height: 125px;
+    max-width: 125px;
+}
+
+.btn-success {
+    width: 50%;
+}
+
+#success_button {
+    text-align: center;
+    margin-top: 1em;
+}
+
+#upload_file {
+    width: 50%;
+    margin: auto;
+}
+
+
+#upload_file:hover {
+    border-top: 1px solid #b30000;
+    margin-top: -1px;
+}
+.custom-file-label {
+    font-size: 10px;
+    color: #b30000;
+}
+
+.card-body {
+    padding: 5px!important;
+}
+
+
+nav ul {
+    list-style: none;
+    padding: 0px 40px 0px 40px;
+    margin-top: 16px!important;
+}
+
+.left_panel table {
+    margin: 0;
+}
+
+.right_panel {
+    display: flex;
+    color: black;
+    flex-direction: column;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+table {
+    margin-bottom: 0!important;
+}

@@ -22,6 +22,7 @@ worker_id INT(20) NOT NULL AUTO_INCREMENT PRIMARY KEY,
 name VARCHAR(30) NOT NULL,
 surname VARCHAR(30) NOT NULL,
 image MEDIUMBLOB,
+image_file_name varchar(100),
 tellNumber INT(50),
 dateOfBirth DATE,
 position VARCHAR(50) NOT NULL,
@@ -40,9 +41,6 @@ worker_id INT(20),
 CONSTRAINT  'worker_id' FOREIGN KEY (worker_id) REFERENCES workers(worker_id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 ";
-
-
-
 
 if($connection->query($query)) {
     echo "database is successfully created";
