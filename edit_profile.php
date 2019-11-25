@@ -5,34 +5,42 @@ require ('db_files/connection.php');
         if(!isset($_SESSION['login']) && !isset($_COOKIE['login'])) {
             header("Location: index.php");
         }
-        //select info from DB about current user
+
+        //getting info from DB about current user
         try {
-            $PDO_connection = new PDO($dsn, $user, $password, $opt);
-            $query = $PDO_connection->prepare("SELECT *
+            $query = DBconfig::getDBConnection()->prepare("SELECT *
                   FROM workers
                   FULL JOIN users
                   ON user_id = users.id
                   WHERE users.login = :user_login");
-            $query->bindValue('user_login', $_SESSION['login'], PDO::PARAM_STR);
+            $query->bindValue(':user_login', $_SESSION['login'], PDO::PARAM_STR);
             $query->execute();
             $sessionUser = $query->fetch(PDO::FETCH_ASSOC);
-            $PDO_connection = null;
         } catch (PDOException $e) {
-            echo "Error with content: " . $e->getMessage();
+            echo $e->getMessage();
+        }
+
+        //getting list of information about when current user went out of work and return to work
+        try{
+            $queryForDateComeDateReturnCurrentUser = DBconfig::getDBConnection()->prepare("SELECT e.outside_id, e.date_come, e.date_return, e.outside_type
+                FROM outside_records e
+                LEFT JOIN workers w
+                ON e.worker_id = w.worker_id
+                WHERE e.worker_id = :id
+                ORDER BY e.date_come asc");
+
+            $queryForDateComeDateReturnCurrentUser->bindValue(":id", $sessionUser['worker_id'], PDO::PARAM_INT);
+            $queryForDateComeDateReturnCurrentUser->execute();
+            $queryForDateComeDateReturnCurrentUserResult = $queryForDateComeDateReturnCurrentUser->fetchAll(PDO::FETCH_ASSOC);
+
+        } catch (PDOException $e) {
+            echo $e->getMessage();
         }
 
         //update data in DB if user had click on button and image was changed
         if(isset($_POST['button_success']) && $_FILES['file']['size'] > 0) {
 
-            $error = array();
-
-            try{
-                $PDO_connection = new PDO($dsn, $user, $password, $opt);
-                $query_for_id_current_user = "SELECT id FROM users WHERE login = '{$_SESSION['login']}'";
-                $query_for_id_current_user_get = $PDO_connection->query($query_for_id_current_user);
-                $id_current_user = $query_for_id_current_user_get->fetch(PDO::FETCH_ASSOC);
-
-                //check file type
+                //checking a file type
                  if(exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_GIF &&
                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JPEG &&
                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_PNG &&
@@ -55,62 +63,131 @@ require ('db_files/connection.php');
                      $error[] = "Недопустимий формат зображення, оберіть інший";
 
                     } else {
-                     //write image to variable
-                     $image = addslashes(file_get_contents($_FILES['file']['tmp_name']));
-                     $queryForUpdateData =
-                     "UPDATE workers SET
-                     position  = '{$_POST['position']}',
-                     dateOfBirth = '{$_POST['dateOfBirth']}',
-                     rank = '{$_POST['rank']}',
-                     tellNumber = '{$_POST['tellNumber']}',
-                     surname = '{$_POST['surname']}',
-                     name = '{$_POST['name']}',
-                     image = '{$image}',
-                     image_file_name = '{$_FILES['file']['name']}'   
-                     WHERE user_id =" . $id_current_user['id'];
-                     $PDO_connection->exec($queryForUpdateData);
 
-                      $PDO_connection = null;
-                      header("Location:" . $_SERVER['PHP_SELF']);
-                 }
+                try {
 
+                //write image to variable
+                $image = addslashes(file_get_contents($_FILES['file']['tmp_name']));
+
+                //updating information that was changed by user
+                $forUpdateWorkerValues = DBconfig::getDBConnection()->prepare("UPDATE workers SET
+                     position  = ?,
+                     dateOfBirth = ?,
+                     rank = ?,
+                     tellNumber = ?,
+                     surname = ?,
+                     name = ?,
+                     image = ?,
+                     image_file_name = ?
+                     WHERE user_id = ?");
+
+                $forUpdateWorkerValues->execute(array($_POST['position'], $_POST['dateOfBirth'], $_POST['rank'],
+                                                $_POST['tellNumber'], $_POST['surname'], $_POST['name'], $image,
+                                                $_FILES['file']['name'], $sessionUser['user_id']));
+
+                //save file in specific directory
+                $filesDirectory = __DIR__ . "/images/" . $_FILES['file']['name'];
+                move_uploaded_file($_FILES['file']['tmp_name'], $filesDirectory);
 
             } catch (PDOException $e) {
-                echo "Error with content: " . $e->getMessage();
+                echo $e->getMessage();
             }
 
+            header("Location:" . $_SERVER['PHP_SELF']);
+        }
 
-            //update data in DB if user had click on button and image was not changed
-            } elseif (isset($_POST['button_success']) && $_FILES['file']['size'] <= 0) {
+
+
+         //update data in DB if user had click on the button and new image was not inserted
+        } elseif (isset($_POST['button_success']) && $_FILES['file']['size'] <= 0) {
 
             try{
-                $PDO_connection = new PDO($dsn, $user, $password, $opt);
-                $query_for_id_current_user = "SELECT id FROM users WHERE login = '{$_SESSION['login']}'";
-                $query_for_id_current_user_get = $PDO_connection->query($query_for_id_current_user);
-                $id_current_user = $query_for_id_current_user_get->fetch(PDO::FETCH_ASSOC);
+                $forUpdateWorkerValues = DBconfig::getDBConnection()->prepare("UPDATE workers SET
+                     position  = ?,
+                     dateOfBirth = ?,
+                     rank = ?,
+                     tellNumber = ?,
+                     surname = ?,
+                     name = ?
+                     WHERE user_id = ?");
 
-                $queryForUpdateDataWithoutImage =
-                "UPDATE workers SET
-                position  = '{$_POST['position']}',
-                dateOfBirth = '{$_POST['dateOfBirth']}',
-                rank = '{$_POST['rank']}',
-                tellNumber = '{$_POST['tellNumber']}',
-                surname = '{$_POST['surname']}',
-                name = '{$_POST['name']}'
-                WHERE user_id =" . $id_current_user['id'];
+                $forUpdateWorkerValues->execute(array($_POST['position'], $_POST['dateOfBirth'], $_POST['rank'],
+                $_POST['tellNumber'], $_POST['surname'], $_POST['name'], $sessionUser['user_id']));
 
-                $PDO_connection->exec($queryForUpdateDataWithoutImage);
-                $PDO_connection = null;
-                header("Location:" . $_SERVER['PHP_SELF']);
+            header("Location:" . $_SERVER['PHP_SELF']);
+
             } catch (PDOException $e) {
-                echo "Error with content: " . $e->getMessage();
+                echo $e->getMessage();
             }
         }
+
+        //add new outside_activity with typed parameters to the current user outside activity history
+        if(isset($_GET['addNew_outside_activity'])) {
+
+            try{
+                $forAddNewOutsideActivity = DBconfig::getDBConnection()->prepare("
+                INSERT INTO outside_records (date_come, date_return, worker_id, outside_type)
+                VALUES (:date_come, :date_return, :worker_id, :outside_type);
+                ");
+                $forAddNewOutsideActivity->bindParam(":date_come", $_GET['add_new_date_come']);
+                $forAddNewOutsideActivity->bindParam(":date_return", $_GET['add_new_date_return']);
+                $forAddNewOutsideActivity->bindParam(":worker_id", $sessionUser['worker_id']);
+                $forAddNewOutsideActivity->bindParam(":outside_type", $_GET['add_new_type_of_outside_activity']);
+
+                $forAddNewOutsideActivity->execute();
+
+                header("Location:" . $_SERVER['PHP_SELF']);
+
+            } catch (PDOException $e) {
+                echo $e->getMessage();
+            }
+
+        }
+
+        //delete outside_activity that was typed
+        if(isset($_GET['delete_outside_activity'])) {
+            try{
+                $forDeleteOutsideActivity = DBconfig::getDBConnection()->prepare("
+                DELETE FROM outside_records WHERE outside_id = :outside_id ;
+                ");
+                $forDeleteOutsideActivity->bindParam(":outside_id", $_GET['outside_id']);
+
+                $forDeleteOutsideActivity->execute();
+
+                header("Location:" . $_SERVER['PHP_SELF']);
+
+            } catch (PDOException $e) {
+                echo $e->getMessage();
+            }
+        }
+
+        //delete outside_activity that was typed
+        if(isset($_GET['update_outside_activity'])) {
+        try{
+        $forUpdateOutsideActivityForCurrentUser = DBconfig::getDBConnection()->prepare("
+                UPDATE outside_records
+                SET outside_type = :outside_type, date_come = :date_come, date_return = :date_return
+                WHERE outside_id = :outside_id ;
+                ");
+        $forUpdateOutsideActivityForCurrentUser->bindParam(":outside_id", $_GET['outside_id']);
+        $forUpdateOutsideActivityForCurrentUser->bindParam(":outside_type", $_GET['current_outside_type_update']);
+        $forUpdateOutsideActivityForCurrentUser->bindParam(":date_come", $_GET['current_date_come_update']);
+        $forUpdateOutsideActivityForCurrentUser->bindParam(":date_return", $_GET['current_date_return_update']);
+
+        $forUpdateOutsideActivityForCurrentUser->execute();
+
+        header("Location:" . $_SERVER['PHP_SELF']);
+
+        } catch (PDOException $e) {
+        echo $e->getMessage();
+        }
+        }
+
         ?>
         <!doctype html>
         <html lang="en">
         <head>
-            <title>Адміністративна панель</title>
+            <title>Введення та зміна інформації</title>
 
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
@@ -129,25 +206,41 @@ require ('db_files/connection.php');
                     <div class="row">
                         <!--logo-->
                         <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-
                         <!--navigation -->
-                        <li class="col-xl-4 col-lg-4 nav_center">
+                        <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
                             <a href="index.php">Головна</a>
-                            <a href="admin.php">Сторінка адміністратора</a>
+                            <a
+                                <?php
+                                if(isset($_SESSION['login']) && $_SESSION['login'] == "capsul6" || isset($_COOKIE['login']) && $_COOKIE['login'] == "capsul6") {
+                                    echo "href='admin.php'";
+                                }
+                                else {
+                                    echo "aria-disabled=\"true\"";
+                                }
+                                ?> >Сторінка адміністратора</a>
                             <a href="edit_profile.php">Редагування та внесення данних</a>
                         </li>
 
                         <!--Photo and information-->
-                        <li class="col-xl-3 offset-xl-2 col-lg-5 offset-lg-1 nav_right">
+                        <li class="col-xl-3  col-lg-3  nav_right">
                             <div class="card">
                                 <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                                    <img class="card-img-top" src="data:image/jpg;base64,<?php echo base64_encode($sessionUser['image'])?>" alt="Card image">
-                                    <div class="text_inside_card">
-                                        <p class="card-title"><b><?php echo $sessionUser['surname'] . " " . $sessionUser['name'];?></b></p>
-                                        <p class="card-text"><b><?php echo $sessionUser['position'];?></b></p>
+                                    <img class="card-img-top" src="images/<?php echo $sessionUser['image_file_name']?>" alt="Відсутнє зображення">
+                                    <div class="text_inside_card text-center">
+                                        <p class="card-text"><?php if(isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
+                                                <?php echo $sessionUser['surname'] . " " . $sessionUser['name'];?>
+                                            <?php else: echo "Не вказані дані";?>
+                                            <?php endif;?></p>
+                                        <p class="card-text"><?php if(isset($sessionUser['position'])):?>
+                                                <?php echo  $sessionUser['position'];?>
+                                            <?php else: echo "Не вказані дані";?>
+                                            <?php endif;?>
+                                        </p>
                                     </div>
                                 </div>
-                                <a href="logout.php" class="btn btn-dark">Вийти</a>
+                                <!--Buttons with logout and edit profile actions-->
+                                <a href="edit_profile.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
+                                <a href="logout.php" class="btn btn-dark btn-sm">Вийти</a>
                             </div>
                         </li>
                 </ul>
@@ -160,7 +253,7 @@ require ('db_files/connection.php');
 
                 <div class="col-sm-12 col-md-12 col-lg-12">
 
-                    <h3 class="text-center">Інформація про працівника</h3>
+                    <h4 class="text-center">Особиста інформація про працівника</h4>
 
                     <form action="<?php echo $_SERVER['PHP_SELF'];?>" method="post" enctype="multipart/form-data">
 
@@ -209,11 +302,16 @@ require ('db_files/connection.php');
                                 }?>"></td>
                         </tr>
                         </tbody>
+
+
+
                     </table>
 
-                    <div  class="text-center">
+
+
+                    <div class="text-center">
                         <div id="upload_file">
-                        <p class="text-center"><b>Фото</b></p>
+                    <label for="file" class="photo_label text-center"><b>Фото</b></label>
                     <input type="file" id="file" name="file">
                         <br>
                         <br>
@@ -222,14 +320,88 @@ require ('db_files/connection.php');
                         </div>
                     </div>
 
-                    <div id="success_button">
-                        <button type="submit" class="btn btn-success" name="button_success">Оновити</button>
+                    <div class="text-center">
+                    <button type="submit" class="btn btn-success" name="button_success">Оновити</button>
                     </div>
 
                     </form>
 
+
+                    <br>
+
+                    <h4 class="text-center">Хронологія та види відсутності</h4>
+
+                    <table class="table table-hover">
+
+                    <thead class="thead-dark">
+                    <tr>
+                        <th>Вид відсутності</th>
+                        <th>Період з</th>
+                        <th>Період по </th>
+                        <th></th>
+                    </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <form method="get" action="<?php $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_update" id="form_for_dateCome_dateReturn_update">
+
+                    <?php if(isset($queryForDateComeDateReturnCurrentUserResult)){
+                        foreach($queryForDateComeDateReturnCurrentUserResult as $thisValues):?>
+                        <tr>
+                            <input type="hidden" value="<?php echo $thisValues['outside_id']?>" name="outside_id">
+                            <td>
+                                <select class="custom-select" name="current_outside_type_update" id="current_outside_type_update">
+                                    <option value="<?php echo $thisValues['outside_type']?>" disabled selected><?php echo $thisValues['outside_type']?></option>
+                                    <option value="відпустка">відпустка</option>
+                                    <option value="відрядження">відрядження</option>
+                                    <option value="лікарняний">лікарняний</option>
+                                </select>
+                            </td>
+                            <td><input type="date" class="form-control"  name="current_date_come_update" value="<?php echo $thisValues['date_come']?>"></td>
+                            <td><input type="date" class="form-control"  name="current_date_return_update" value="<?php echo $thisValues['date_return']?>"></td>
+                            <td class="text-center">
+                                <button type="submit" class="btn btn-warning update" name="update_outside_activity">Оновити</button>
+                                <button type="submit" class="btn btn-danger delete" name="delete_outside_activity">Видалити</button>
+                            </td>
+                        </tr>
+                        <?php endforeach;}?>
+
+                    </form>
+
+                    <form method="get" action="<?php $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_add">
+
+                        <tr>
+                            <td><select type="text" class="form-control custom-select" name="add_new_type_of_outside_activity" required>
+                                    <option value="відпустка">відпустка</option>
+                                    <option value="відрядження">відрядження</option>
+                                    <option value="лікарняний">лікарняний</option>
+                            </select></td>
+                            <td><input type="date" class="form-control" name="add_new_date_come" required></td>
+                            <td><input type="date" class="form-control" name="add_new_date_return" required></td>
+                            <td class="text-center">
+                            <button type="submit" class="btn btn-success" name="addNew_outside_activity">Додати</button>
+                            </td>
+                        </tr>
+                    </form>
+
+                    </tbody>
+
+                    </table>
+
                 </div>
 
-                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+            </div>
+
+        </div>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+        <script>
+            $(document).ready(function (){
+               $("#form_for_dateCome_dateReturn_update").on("submit",function () {
+                   let a = $("#current_outside_type_update").val();
+                   console.log(a);
+                });
+            });
+        </script>
         </body>
         </html>

@@ -8,8 +8,6 @@
 }
 
 .nav_right img {
-    height: 100px;
-    width: 100px;
     max-height: 100px;
     max-width: 100px;
 }
@@ -18,28 +16,10 @@
     padding: 5px !important;
 }
 
-
-
 nav ul {
     list-style: none;
     padding: 0px 40px 0px 40px;
     margin-top: 16px !important;
-}
-
-@keyframes nav_refers_animation{
-   0%{
-       font-size: 16px;
-       border: none;
-   }
-   50%{
-       font-size: 17px
-   }
-   100%{
-       font-size: 18px;
-       border-right: 2px solid navy;
-       border-left: 2px solid darkred;
-
-   }
 }
 
 .nav_center a {
@@ -56,9 +36,8 @@ nav ul {
     background-color: #fcfcfc;
     border-radius: 5px;
     padding: 15px;
-    animation: nav_refers_animation .3s;
-    animation-delay: .1s;
-    animation-fill-mode: forwards;
+    border-bottom: black solid 3px;
+
 }
 
 .left_panel table {
@@ -75,6 +54,11 @@ nav ul {
     position: relative;
 }
 
+.main_block table {
+    position: relative;
+    font-size: 15px !important;
+}
+
 ul {
     list-style: none;
     padding: 0;
@@ -85,7 +69,5 @@ table {
     margin-bottom: 0 !important;
 }
 
-.user input {
-    display: none;
-}
+
 

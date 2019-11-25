@@ -1,9 +1,6 @@
 <?php
  require("db_files/connection.php");
 
-//define connection
-$PDO_connection = new PDO($dsn, $user, $password, $opt);
-
  function inputValidate($text) {
      $text = trim($text);
      $text = substr($text,0,29);
@@ -35,20 +32,26 @@ $PDO_connection = new PDO($dsn, $user, $password, $opt);
  if(isset($_POST['reg_button'])) {
 
      //get data from db and check for repeat
-     if(!empty($_POST['login'])) {
-         $query = "SELECT login FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
-         $PDO_connection->prepare("SELECT login FROM users WHERE login = ?");
-         $loginFromForm = $PDO_connection->query($query);
+     try{
+         if(!empty($_POST['login'])) {
 
-         if ($loginFromForm->rowCount() > 0) {
-             while ($row = $loginFromForm->fetch(PDO::FETCH_ASSOC)) {
+             $get_login = DBconfig::getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
+
+             $get_login->bindParam(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
+
+             $get_login->execute();
+
+             while ($row = $get_login->fetch(PDO::FETCH_ASSOC)) {
+
                  if (inputValidate($_POST['login']) == $row['login']) {
                      $loginErrors = $errors['login_errors']['already_exist'];
                  }
              }
          }
-
+     } catch (PDOException $e) {
+         die($e->getMessage());
      }
+
 
      //verify login input
 
@@ -69,16 +72,15 @@ $PDO_connection = new PDO($dsn, $user, $password, $opt);
          $loginErrors = $errors['login_errors']['less_than_three_symbols'];
 
          //check for correct symbols (only letters and numbers)
-     } elseif (!preg_match("/[a-zA-ZА-ЯЁа-яё0-9]/u", inputValidate($_POST['login']))) {
+     } elseif (!ctype_alnum(inputValidate($_POST['login']))) {
 
          $loginErrors = $errors['login_errors']['incorrect_type_of_chars'];
 
      };
 
+     //verify password input
 
-     ///verify password input
-
-     /// check for non empty
+     // check for non empty
      if (inputValidate($_POST['password'] == '')){
 
          $passwordErrors = $errors['password_errors']['empty'];
@@ -102,9 +104,7 @@ $PDO_connection = new PDO($dsn, $user, $password, $opt);
          $passwordErrors = $errors['password_errors']['incorrect_type_of_chars'];
      };
 
-
-
-     //check password verify for conformity "email" and "email password"
+     //check password for correlation "email" and "email password"
      if (inputValidate($_POST['password_verify']) !== inputValidate($_POST['password'])){
          $repeatPasswordErrors = $errors['password_verify_errors']['don`t_found'];
 
@@ -117,41 +117,61 @@ $PDO_connection = new PDO($dsn, $user, $password, $opt);
       //check email for non empty
      if (inputValidate($_POST['email']) == "") {
          $emailErrors = $errors['email_errors']['empty'];
-     }
-
-     //check for correct symbols in email input
-     if(!filter_var(inputValidate($_POST['email']), FILTER_VALIDATE_EMAIL)) {
+         //check for correct symbols in email input
+     } elseif (!filter_var(inputValidate($_POST['email']), FILTER_VALIDATE_EMAIL)) {
          $emailErrors = $errors['email_errors']['don`t_contain_symbol'];
      }
 
-     $email12 = inputValidate($_POST['email']);
+
+     $emailFromForm = inputValidate($_POST['email']);
 
      //get data from db for "already exist" error check
      if(isset($_POST['email'])) {
-         $query = "SELECT email FROM users WHERE email = " . "'" . $email12 . "';";
 
-         $emailFromForm = $PDO_connection->query($query);
+         try {
+             $query = DBconfig::getDBConnection()->prepare("SELECT email FROM users WHERE email = :email_from_form;");
 
-         if ($emailFromForm->rowCount() > 0) {
-             while ($row = $emailFromForm->fetch(PDO::FETCH_ASSOC)) {
-                 if (inputValidate($_POST['email']) == $row['email']) {
-                     $emailErrors = $errors['email_errors']['already_exist'];
+             $query->bindParam(":email_from_form", $emailFromForm, PDO::PARAM_STR);
+
+             $query->execute();
+
+             if ($query->rowCount() > 0) {
+                 while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+                     if ($emailFromForm == $row['email']) {
+                         $emailErrors = $errors['email_errors']['already_exist'];
+                     }
                  }
              }
-         }
 
+         } catch (PDOException $e) {
+             die($e->getMessage());
+         }
      }
 
 
-    if (empty($loginErrors) && empty($loginErrors)&& empty($repeatPasswordErrors)&& empty($emailErrors)) {
+    if (empty($loginErrors) && empty($repeatPasswordErrors) && empty($emailErrors)) {
 
-        $query = "INSERT INTO users(login,password,email) VALUES (" . "'" . inputValidate($_POST['login']) . "'," . "'" . password_hash($_POST['password'], PASSWORD_DEFAULT) . "',"  . "'" . inputValidate($_POST['email']) . "');" ;
+        $login = inputValidate($_POST['password']);
+        $password = inputValidate($_POST['password']);
+        $email = inputValidate($_POST['email']);
 
-        if($PDO_connection->exec($query) != 0) {
-            $PDO_connection = null;
+        try{
+
+        $insert_data = DBconfig::getDBConnection()->prepare("INSERT INTO users(login,password,email) VALUES (:login, :password, :email);");
+
+        $insert_data->bindParam(":login", $login, PDO::PARAM_STR);
+        $insert_data->bindParam(":password", $password, PDO::PARAM_STR);
+        $insert_data->bindParam(":email", $email, PDO::PARAM_STR);
+
+        $result = $insert_data->execute();
+
+        if($result) {
             header('Location: index.php');
         }
-    }
+
+    } catch (PDOException $e) {
+            die($e->getMessage());
+        }}
  }
 
 
@@ -191,13 +211,13 @@ $PDO_connection = new PDO($dsn, $user, $password, $opt);
 
 <div class="row login_menu">
 
-    <form method="post" action="registration.php" class="mx-auto">
+    <form method="post" action="<?php $_SERVER['PHP_SELF']?>" class="mx-auto">
         <div class="form-group">
             <label for="Login">Логін</label>
-            <input type="text" class="form-control" id="Login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];}?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
+            <input type="text" class="form-control" id="Login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
         </div>
         <div class="form-group">
-            <label for="Password">Пароль</label>
+            <label for="password">Пароль</label>
             <input type="password" class="form-control" id="Password" placeholder="Пароль" name="password" maxlength="30" minlength="3"><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
         </div>
         <div class="form-group">

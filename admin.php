@@ -3,36 +3,60 @@ require ('db_files/connection.php');
 
 session_start();
 //check for available session or cookies
-if(!isset($_SESSION['login']) && !isset($_COOKIE['login'])) {
+if(empty($_SESSION['login']) && empty($_COOKIE['login'])) {
     header("Location: index.php");
 }
-//connect db and get
+
+//connect to db and get information based on Session "login" value for user account
 try {
-    $PDO_connection = new PDO($dsn, $user, $password, $opt);
-    $query = $PDO_connection->prepare("SELECT * FROM workers 
-    LEFT JOIN users
-    ON user_id = users.id
-    WHERE users.login = :user_login");
-    $query->bindValue('user_login', $_SESSION['login'], PDO::PARAM_STR);
+    $query = DBconfig::getDBConnection()->prepare("SELECT e.name, e.surname, e.image, e.position, e.image_file_name
+    FROM workers e
+    LEFT JOIN users a
+    ON e.user_id = a.id
+    WHERE a.login = :user_login");
+    $query->bindValue(':user_login', $_SESSION['login'], PDO::PARAM_STR);
     $query->execute();
     $sessionUser = $query->fetch(PDO::FETCH_ASSOC);
-    $PDO_connection = null;
+    } catch (PDOException $e) {
+       echo "Error with content: " . $e->getMessage();
+    }
 
-        } catch (PDOException $e) {
-            echo "Error with content: " . $e->getMessage();
-        }
-
+//select all users those presented in DB for user_list
 try {
-    $PDO_connection = new PDO($dsn, $user, $password, $opt);
-    $query = $PDO_connection->query("SELECT name, surname, position, user_id FROM workers");
+    $query = DBconfig::getDBConnection()->query("SELECT name, surname, position, user_id FROM workers");
     $AllUsers = $query->fetchAll(PDO::FETCH_ASSOC);
-    $PDO_connection = null;
-
 } catch (PDOException $e) {
     echo "Error with content: " . $e->getMessage();
 }
 
+
+//if checkbox was clicked than start searching info in DB for selected user
+if(isset($_GET['user_id'])) {
+
+    try {
+        $queryForUserInfo = DBconfig::getDBConnection()->prepare("SELECT position, dateOfBirth, rank, tellNumber, worker_id
+                                               FROM workers
+                                               WHERE user_id = :id");
+        $queryForUserInfo->bindValue(":id", $_GET['user_id'], PDO::PARAM_INT);
+        $queryForUserInfo->execute();
+        $queryForUserInfoResult = $queryForUserInfo->fetch(PDO::FETCH_ASSOC);
+
+        $sth1 = DBconfig::getDBConnection()->prepare("SELECT e.date_come, e.date_return, e.outside_type
+                                      FROM outside_records e
+                                      LEFT JOIN workers w on e.worker_id = w.worker_id
+                                      WHERE w.user_id = :id
+                                      ORDER BY date_return DESC");
+        $sth1->bindValue(":id", $_GET['user_id'], PDO::PARAM_INT);
+        $sth1->execute();
+        $outsideSchedule = $sth1->fetchAll(PDO::FETCH_ASSOC);
+
+    } catch (PDOException $e){
+        echo $e->getMessage();
+    };
+}
+
 ?>
+
 <!doctype html>
 <html lang="en">
 <head>
@@ -56,17 +80,15 @@ try {
             <!--logo-->
             <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
             <!--navigation -->
-            <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center ">
-                <a href="index.php">Головна</a>
+            <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
+                <a href="main.php">Головна</a>
                 <a
                     <?php
-                    if(isset($_SESSION['login']) && $_SESSION['login'] == "capsul6"){
-                        echo "href='admin.php'";
-                    } elseif(isset($_COOKIE['login']) && $_COOKIE['login'] == "capsul6") {
+                    if(isset($_SESSION['login']) && $_SESSION['login'] == "capsul6" || isset($_COOKIE['login']) && $_COOKIE['login'] == "capsul6") {
                         echo "href='admin.php'";
                     }
                     else {
-                        echo "";
+                        echo "aria-disabled=\"true\"";
                     }
                     ?> >Сторінка адміністратора</a>
                 <a href="edit_profile.php">Редагування та внесення данних</a>
@@ -76,12 +98,12 @@ try {
             <li class="col-xl-3  col-lg-3  nav_right">
                 <div class="card">
                     <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                    <img class="card-img-top" src="images/DSC_0029.jpg" alt="Card image">
+                    <img class="card-img-top" src="images/<?php echo $sessionUser['image_file_name'];?>" alt="Відсутнє зображення">
                      <div class="text_inside_card">
                          <p class="card-text"><?php if(isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
-                                                    <?php echo $sessionUser['surname'] . " " . $sessionUser['name'];?>
-                                                    <?php else: echo "Не вказані дані";?>
-                                                    <?php endif;?></p>
+                                                <?php echo $sessionUser['surname'] . " " . $sessionUser['name'];?>
+                                                <?php else: echo "Не вказані дані";?>
+                                                <?php endif;?></p>
                          <p class="card-text"><?php if(isset($sessionUser['position'])):?>
                                                  <?php echo  $sessionUser['position'];?>
                                                  <?php else: echo "Не вказані дані";?>
@@ -98,11 +120,11 @@ try {
     </nav>
 </header>
 
-            <div class="container main_block">
+<div class="container main_block">
 
             <div class="row">
 
-                <div class="col-sm-4 col-md-4 col-lg-4 left_panel">
+                <div class="col-sm-5 col-md-5 col-lg-5 left_panel">
                     <div>
                     <h3 class="text-center">Список працівників</h3>
                     </div>
@@ -112,30 +134,35 @@ try {
                         <thead class="thead-dark">
                         <tr>
 
+                        <th></th>
                         <th>Ім'я</th>
                         <th>Фамілія</th>
                         <th>Посада</th>
+
                         </tr>
                         </thead>
 
                         <tbody>
 
-                        <?php foreach ($AllUsers as $user):
-                        echo "
-                        <!--just for getting id to make db query-->
-                        <tr class='user'>
-                        <td><input name='name' id='userName' value='{$user['user_id']}'>{$user['name']}</td>
-                        <td><input>{$user['surname']}</td>
-                        <td><input>{$user['position']}</td>
-                        </tr>";
-                        endforeach;?>
-                        </tbody>
+                        <form action="<?php echo $_SERVER['PHP_SELF']?>" method="get" id="listOfUsers_form">
 
-        </table>
+                        <!--just for getting id to make db query-->
+                        <?php foreach ($AllUsers as $user):?>
+                        <tr class='usersList'>
+                        <td><input type='checkbox' name='user_id' value='<?php if(isset($user)){echo $user['user_id'];}?>'></td>
+                        <td><?php echo $user['name'];?></td>
+                        <td><?php echo $user['surname'];?></td>
+                        <td><?php echo $user['position'];?></td>
+                        </tr>
+
+                        <?php endforeach; ?>
+                        </tbody>
+                        </form>
+                        </table>
 
     </div>
 
-    <div class="col-sm-8 col-md-8 col-lg-8 right_panel">
+    <div class="col-sm-7 col-md-7 col-lg-7 right_panel">
         <h3 class="text-center">Інформація про працівника</h3>
         <table class="table table-hover">
 
@@ -149,12 +176,31 @@ try {
             </thead>
 
             <tbody>
+
+            <?php
+            if(isset($queryForUserInfoResult)){
+            echo "
             <tr>
-                <td id="resultPosition"></td>
-                <td id="resultDateOfBirth"></td>
-                <td id="resultRank"></td>
-                <td id="resultTellNumber"></td>
+                <td id=\"resultPosition\">{$queryForUserInfoResult['position']}</td>
+                <td id=\"resultDateOfBirth\">{$queryForUserInfoResult['dateOfBirth']}</td>
+                <td id=\"resultRank\">{$queryForUserInfoResult['rank']}</td>
+                <td id=\"resultTellNumber\">{$queryForUserInfoResult['tellNumber']}</td>
             </tr>
+            ";
+            }
+
+            else {
+                echo "
+                <tr>
+                <td id=\"resultPosition\"></td>
+                <td id=\"resultDateOfBirth\"></td>
+                <td id=\"resultRank\"></td>
+                <td id=\"resultTellNumber\"></td>
+            </tr>
+            ";
+            }
+            ?>
+
             </tbody>
 
             </table>
@@ -168,7 +214,15 @@ try {
 
             <tbody>
             <tr id="status">
-                <td width="100%"></td>
+                    <?php if(!empty($outsideSchedule)) {
+                        if($outsideSchedule[0]['date_return'] >= date('Y-m-d')) {
+                            echo "<td width=\"100%\" id=\"colorful_row\">Відсутній на робочому місті</td>";
+                        } else {
+                            echo "<td width=\"100%\" id=\"colorful_row\">На робочому місці</td>";
+                        }
+                    } else {
+                        echo "<td></td>";
+                    }?>
             </tr>
             </tbody>
 
@@ -183,10 +237,17 @@ try {
             <tbody>
             <tr class="table-warning">
                 <td>
+                    <?php if(isset($outsideSchedule)) :?>
+                    <?php foreach ($outsideSchedule as $dates): ?>
                     <ul>
-                        <li>Відпустка з <span id="resultFrom">____.__.__</span> по <span id="resultTo">____.__.__</span></li>
+                        <li><?php echo $dates['outside_type'];?> з <span id=\"resultFrom\"><?php echo $dates['date_come'];?></span> по <span id=\"resultTo\"><?php echo $dates['date_return'];?></span></li>
                     </ul>
+                    <?php endforeach;?>
+                    <?php endif ?>
+                    <?php if(!isset($outsideSchedule)): ?>
+                    <?php echo ""; endif;?>
                 </td>
+
             </tr>
             </tbody>
             </table>
@@ -194,57 +255,46 @@ try {
     </div>
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+
 <script>
-    $(".user").click(function (event) {
-        let a = event.currentTarget.cells[0].firstElementChild.attributes[2].value;
-        $.ajax({
-            url: "forDetaileWorkerQuery.php",
-            type: "POST",
-            data: "name=" + a,
-            success: function (data) {
-                let obj = JSON.parse(data);
-                $("#resultPosition").html(obj[0].position);
-                $("#resultDateOfBirth").html(obj[0].dateOfBirth);
-                $("#resultRank").html(obj[0].rank);
-                $("#resultTellNumber").html(obj[0].tellNumber);
-                $("#resultFrom").html(obj[0].date_come);
-                $("#resultTo").html(obj[0].date_return);
+$(document).ready(function(){
 
+        let a = new URL(window.location.href);
 
-                let todayDate = new Date();
-                let fromDateHtml = $("#resultFrom")[0].firstChild.data;
-                let toDateHtml = $("#resultTo")[0].firstChild.data;
+        if(a.searchParams.get("user_id") == null){
+            localStorage.clear();
+        }
 
-                let fromDate = new Date(fromDateHtml);
-                let toDate = new Date(toDateHtml);
-
-                if(todayDate < fromDate || todayDate > toDate) {
-                    $("#status")[0].firstElementChild.innerHTML = "На робочому місці";
-                    $("#status")[0].className = "table-success";
-                }
-                 else{
-                    $("#status")[0].firstElementChild.innerHTML = "Відсутній на робочому місці";
-                    $("#status")[0].className = "table-danger";
-                }
-
-
-
+        if(localStorage.getItem("input-value")) {
+        for(let i = 0; i < $("input:checkbox").length; i++) {
+            if($("input:checkbox")[i].value == localStorage.getItem("input-value")){
+                $("input:checkbox")[i].setAttribute("checked", "checked");
             }
-    })
-    });
+        }
+        }
 
-    $("body").click(function () {
-            $("#resultPosition").html("");
-            $("#resultDateOfBirth").html("");
-            $("#resultRank").html("");
-            $("#resultTellNumber").html("");
-            $("#resultFrom").html("____-__-__");
-            $("#resultTo").html("____-__-__");
-            $("#status")[0].firstElementChild.innerHTML = "";
-            $("#status")[0].className = "";
-            }
-        );
+    let row = $('#colorful_row').html();
+
+    if(row == "Відсутній на робочому місті") {
+        $("#status").css("background-color", "red");
+    } else if (row == "На робочому місці") {
+        $("#status").css("background-color", "lightgreen");
+    } else  {
+        $("#status").css("background-color", "white");
+    }
+
+$(".usersList input:checkbox").on("change", function(){
+    for(let i = 0; i < $("input:checkbox").length; i++) {
+        $("input:checkbox")[i].removeAttribute("checked");
+    }
+
+    localStorage.setItem("input-value", $(this).val());
+    $("#listOfUsers_form").submit();
+});
+});
+
 </script>
+
 </body>
 </html>
 

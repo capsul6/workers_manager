@@ -1,14 +1,14 @@
 
 <?php
 require 'db_files/connection.php';
+session_start();
 
-if(isset($_COOKIE['login'])) {
+if(isset($_COOKIE['login']) or isset($_SESSION['login'])) {
     header('Location: admin.php');
 }
 
 function inputValidate($text) {
     $text = trim($text);
-    $text = substr($text,0,29);
     $text = stripslashes($text);
     return $text;
 }
@@ -20,7 +20,7 @@ $errors = array("login_errors" =>
     array("empty" => "логін не може бути пустим",
     "more_than_thirty_symbols" => "логін не може бути довше 30 символів",
     "less_than_three_symbols" => "логін не може бути коротшим за 3 символи",
-    "already_exist" => "користувача з таким логіном не існує"),
+    "there`s_no_user_with_the_login" => "користувач з таким логіном відсутній у базі даних"),
 
     "password_errors" =>
         array("empty" => "пароль не може бути пустим",
@@ -30,84 +30,93 @@ $errors = array("login_errors" =>
 );
 
 
-//check login input
 
 if(isset($_POST['login_button'])) {
 
-//check login for non-empty
+/*
+     * Block of code for checking "login" field that was typed by user
+*/
+    //get "login" field values from db based on user input
+    try {
+        //get data from db and check if login is already in db or there`s no user with user typed "login"
+        $queryForGetUserLogin = DBconfig::getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
+        $queryForGetUserLogin->bindValue(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
+        $queryForGetUserLogin->execute();
+        $resultUserLogin = $queryForGetUserLogin->fetch(PDO::FETCH_ASSOC);
+        if ($resultUserLogin['login'] != inputValidate($_POST['login'])) {
+            $loginErrors = $errors['login_errors']['there`s_no_user_with_the_login'];
+        }
+        $connection = null;
+    } catch (PDOException $e) {
+       die($e->getMessage());
+    }
+
+    //check "login" field for non-empty
     if (inputValidate($_POST['login']) == "") {
         $loginErrors = $errors['login_errors']['empty'];
 
-        //check for length no more than 30 symbols
+    //check if length of typed "login" field is more than 30 symbols
     } elseif (mb_strlen(inputValidate($_POST['login']), "UTF-8") > 30) {
         $loginErrors = $errors['login_errors']['more_than_thirty_symbols'];
 
-        //check for length (less than 3 symbols)
+    //check if length of typed "login" field is less than 3 symbols
     } elseif (mb_strlen(inputValidate($_POST['login']), "UTF-8") < 3) {
         $loginErrors = $errors['login_errors']['less_than_three_symbols'];
-    }
 
-    //get data from db and check is login already in db
-    $connection = new mysqli($host, $user, $password, $database);
-    if ($connection->error) die($connection->error);
-    $query = "SELECT login FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
-    $loginFromDB = $connection->query($query)->fetch_assoc();
-    $connection->close();
-    if ($loginFromDB['login'] != inputValidate($_POST['login'])) {
-        $loginErrors = $errors['login_errors']['already_exist'];
+    //checking for that the typed value in "login" field was not found in db and "password" field is empty
+    } elseif ($loginErrors == $errors['login_errors']['there`s_no_user_with_the_login'] && inputValidate($_POST['password'] == "")){
+        $passwordErrors = $errors['password_errors']['empty'];
     }
 
 
-    //check password input
+    /*
+     * Block of code for checking "password" field that was typed by user
+    */
+    //getting "login" and "password" values from DB based on user typed login and password
+    try {
+      $queryForGetUserLoginAndPassword = DBconfig::getDBConnection()->prepare("SELECT login, password FROM users WHERE login = :login");
+      $queryForGetUserLoginAndPassword->bindValue(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
+      $queryForGetUserLoginAndPassword->execute();
+      $result = $queryForGetUserLoginAndPassword->fetch(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        die($e->getMessage());
+    }
+
+    //checking that the "password" field that was typed by user is empty
     if (inputValidate($_POST['password']) == "") {
         $passwordErrors = $errors['password_errors']['empty'];
 
-        //check for length no more than 30 symbols
-    } elseif (mb_strlen(inputValidate($_POST['password']), "UTF-8") > 30) {
+    //checking if length of typed "password" field is more than 30 symbols
+    } else if (mb_strlen(inputValidate($_POST['password']), "UTF-8") > 30) {
         $passwordErrors = $errors['password_errors']['more_than_thirty_symbols'];
 
-        //check for length (less than 3 symbols)
-    } elseif (mb_strlen(inputValidate($_POST['password']), "UTF-8") < 3) {
+    //checking if length of typed "password" field is less than 3 symbols
+    } else if (mb_strlen(inputValidate($_POST['password']), "UTF-8") < 3) {
         $passwordErrors = $errors['password_errors']['less_than_three_symbols'];
-    }
 
-    //get data from db and check is login with this password already in db
-    $connection = new mysqli($host, $user, $password, $database);
-    $connection->set_charset("utf8");
-    if ($connection->error) die($connection->error);
-    $query = "SELECT login, password FROM users WHERE login = " . "'" . inputValidate($_POST['login']) . "';";
+    //checking that the "login" field that was typed by user is not empty and typed password doesn`t match real password
+    } else if (!empty($result['login']) && !password_verify(inputValidate($_POST['password']), $result['password'])) {
+        $passwordErrors = $errors['password_errors']['password doesn\'t match login'];
 
-    $loginAndPasswordFromDB = $connection->query($query);
-    $result = $loginAndPasswordFromDB->fetch_assoc();
-    $connection->close();
-
-    //check if all is ok
-    if($result['login'] == inputValidate($_POST['login']) && password_verify($_POST['password'], $result['password']) && empty($loginErrors)&& empty($passwordErrors)) {
-
-        //if all is ok set session
-        session_start();
-        $_SESSION['login'] = $result['login'];
-        $_SESSION['name'] = $result['name'];
-        $_SESSION['surname'] = $result['surname'];
-        //and send user to next page
-        header("Location: admin.php");
-
-        //if isset remember_me check_button, set cookies
-        if(isset($_POST['remember_me'])) {
-            setrawcookie('login', $result['login'], time() + (7 * 24 * 60 * 60));
-            setrawcookie('name', $result['name'], time() + (7 * 24 * 60 * 60));
-            setrawcookie('surname', $result['surname'], time() + (7 * 24 * 60 * 60));
-        }
-
-
-    //some check
-    } elseif (empty($loginErrors) && inputValidate($_POST['password']) == "") {
+    //checking that the "login" field is filled success but "password" field is empty
+    } else if (empty($loginErrors) && inputValidate($_POST['password']) == "") {
         $passwordErrors = $errors['password_errors']['empty'];
     }
-    // check if password dont matches login
-    elseif(!password_verify(inputValidate($_POST['password']), $result['password'])) {
-           $passwordErrors = $errors['password_errors']['password dont match login'];
-    }
+
+        //check if all inputs are correctly
+    if ($result['login'] == inputValidate($_POST['login']) && password_verify($_POST['password'], $result['password']) && empty($loginErrors) && empty($passwordErrors)) {
+
+    //if all inputs are correctly set session
+    session_start();
+    $_SESSION['login'] = $result['login'];
+
+    //if isset remember_me check_button, set cookies
+    if (isset($_POST['remember_me'])) {
+        setrawcookie('login', $result['login'], time() + (7 * 24 * 60 * 60));
+     }
+    //and send user to next page
+     header("Location: admin.php");
+     }
 }
 ?>
 <!doctype html>
@@ -169,15 +178,16 @@ if(isset($_POST['login_button'])) {
 </main>
 
 <script>
+
     window.onload = function () {
-
-       let a = $(window).height();
-       $("body").css("height", a);
-
+        let a = window.innerHeight;
+        $("body").css("height", a);
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         });
     };
+
+
 </script>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
