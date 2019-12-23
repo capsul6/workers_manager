@@ -12,9 +12,14 @@ public static $opt = [
     PDO::ATTR_EMULATE_PREPARES => false,
 ];
 
+
 public static function getDBConnection() : PDO {
     $connection = new PDO(self::$dsn, self::$user, self::$password, self::$opt);
     return $connection;
-    }
+ }
+
+
 }
+
+
 ?>

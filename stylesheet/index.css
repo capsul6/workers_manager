@@ -39,7 +39,7 @@ form {
     height: 20px;
 }
 
-#login_button {
+.login_button {
     margin-top: 10px;
     width: 100%;
 }
@@ -47,4 +47,13 @@ form {
 .login_menu {
     margin: 0;
     padding: 20px 0 20px 0;
+}
+
+#forgot_password_text {
+    text-decoration-color: white!important;
+
+}
+
+.text-white {
+    margin-top: 15px;
 }

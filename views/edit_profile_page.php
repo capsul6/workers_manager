@@ -1,5 +1,5 @@
 <?php
-require ('db_files/connection.php');
+require_once('../db_files/connection.php');
 
         session_start();
         if(!isset($_SESSION['login']) && !isset($_COOKIE['login'])) {
@@ -27,7 +27,8 @@ require ('db_files/connection.php');
                 LEFT JOIN workers w
                 ON e.worker_id = w.worker_id
                 WHERE e.worker_id = :id
-                ORDER BY e.date_come asc");
+                ORDER BY e.date_come ASC
+                ");
 
             $queryForDateComeDateReturnCurrentUser->bindValue(":id", $sessionUser['worker_id'], PDO::PARAM_INT);
             $queryForDateComeDateReturnCurrentUser->execute();
@@ -38,29 +39,29 @@ require ('db_files/connection.php');
         }
 
         //update data in DB if user had click on button and image was changed
-        if(isset($_POST['button_success']) && $_FILES['file']['size'] > 0) {
+        if (isset($_POST['button_success']) && $_FILES['file']['size'] > 0) {
 
-                //checking a file type
-                 if(exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_GIF &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JPEG &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_PNG &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_SWF &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_PSD &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_BMP &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_TIFF_II &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_TIFF_MM &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JPC &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JP2 &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JPX &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JB2 &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_SWC &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_IFF &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_WBMP &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_XBM &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_ICO &&
-                    exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_WEBP) {
+                //checking file type
+                 if (exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_GIF &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JPEG &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_PNG &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_SWF &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_PSD &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_BMP &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_TIFF_II &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_TIFF_MM &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JPC &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JP2 &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JPX &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_JB2 &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_SWC &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_IFF &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_WBMP &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_XBM &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_ICO &&
+                     exif_imagetype($_FILES['file']['tmp_name']) != IMAGETYPE_WEBP) {
 
-                     $error[] = "Недопустимий формат зображення, оберіть інший";
+                     $error = "Недопустимий формат зображення, оберіть інший";
 
                     } else {
 
@@ -86,7 +87,7 @@ require ('db_files/connection.php');
                                                 $_FILES['file']['name'], $sessionUser['user_id']));
 
                 //save file in specific directory
-                $filesDirectory = __DIR__ . "/images/" . $_FILES['file']['name'];
+                $filesDirectory = __DIR__ . "../images/" . $_FILES['file']['name'];
                 move_uploaded_file($_FILES['file']['tmp_name'], $filesDirectory);
 
             } catch (PDOException $e) {
@@ -161,7 +162,7 @@ require ('db_files/connection.php');
             }
         }
 
-        //delete outside_activity that was typed
+        //update outside_activity that was typed
         if(isset($_GET['update_outside_activity'])) {
         try{
         $forUpdateOutsideActivityForCurrentUser = DBconfig::getDBConnection()->prepare("
@@ -191,7 +192,7 @@ require ('db_files/connection.php');
 
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-            <link href="stylesheet/edit_profile.css" rel="stylesheet">
+            <link href="../stylesheet/edit_profile.css" rel="stylesheet">
 
             <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -205,41 +206,46 @@ require ('db_files/connection.php');
                 <ul>
                     <div class="row">
                         <!--logo-->
-                        <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
+                        <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
                         <!--navigation -->
                         <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
-                            <a href="index.php">Головна</a>
+                            <a href="information_page.php">Головна</a>
                             <a
                                 <?php
                                 if(isset($_SESSION['login']) && $_SESSION['login'] == "capsul6" || isset($_COOKIE['login']) && $_COOKIE['login'] == "capsul6") {
-                                    echo "href='admin.php'";
+                                    echo "href='admin_page.php'";
                                 }
                                 else {
                                     echo "aria-disabled=\"true\"";
                                 }
-                                ?> >Сторінка адміністратора</a>
-                            <a href="edit_profile.php">Редагування та внесення данних</a>
+                                ?>>Сторінка адміністратора</a>
+                            <a href="edit_profile_page.php">Редагування та внесення данних</a>
                         </li>
 
                         <!--Photo and information-->
                         <li class="col-xl-3  col-lg-3  nav_right">
                             <div class="card">
                                 <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                                    <img class="card-img-top" src="images/<?php echo $sessionUser['image_file_name']?>" alt="Відсутнє зображення">
+                                    <img class="card-img-top" src="../images/<?= $sessionUser['image_file_name']?>" alt="Відсутнє зображення">
                                     <div class="text_inside_card text-center">
-                                        <p class="card-text"><?php if(isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
-                                                <?php echo $sessionUser['surname'] . " " . $sessionUser['name'];?>
-                                            <?php else: echo "Не вказані дані";?>
+                                        <p class="card-text">
+                                            <?php if (isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
+                                            <?= $sessionUser['surname'] . " " . $sessionUser['name'];?>
+                                            <?php else:
+                                                echo "Не вказані дані";
+                                            ?>
                                             <?php endif;?></p>
                                         <p class="card-text"><?php if(isset($sessionUser['position'])):?>
-                                                <?php echo  $sessionUser['position'];?>
-                                            <?php else: echo "Не вказані дані";?>
+                                                <?= $sessionUser['position'];?>
+                                            <?php else:
+                                                echo "Не вказані дані";
+                                            ?>
                                             <?php endif;?>
                                         </p>
                                     </div>
                                 </div>
                                 <!--Buttons with logout and edit profile actions-->
-                                <a href="edit_profile.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
+                                <a href="edit_profile_page.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
                                 <a href="logout.php" class="btn btn-dark btn-sm">Вийти</a>
                             </div>
                         </li>
@@ -270,7 +276,7 @@ require ('db_files/connection.php');
                         <tbody>
                         <tr>
                             <td><input type="text" name="position" class="form-control" value="<?php if(!empty($sessionUser['position'])) {
-                                                                                echo $sessionUser['position'];
+                                                                     echo $sessionUser['position'];
                                                                      }?>"></td>
                             <td><input type="date" name="dateOfBirth" class="form-control" value="<?php if(!empty($sessionUser['dateOfBirth'])) {
                                                                      echo $sessionUser['dateOfBirth'];
@@ -303,11 +309,7 @@ require ('db_files/connection.php');
                         </tr>
                         </tbody>
 
-
-
                     </table>
-
-
 
                     <div class="text-center">
                         <div id="upload_file">
@@ -315,8 +317,10 @@ require ('db_files/connection.php');
                     <input type="file" id="file" name="file">
                         <br>
                         <br>
-                        <p class="text-success text_for_file"><small>Оберіть файл для оновлення профілю (рекомендований розмір 125х125)</small></p>
-                            <p class="text-danger"><?php if(isset($error)) {echo $error[0]; unset($error);}?></p>
+                        <p class="text-success text_for_file"><small>Оберіть файл для оновлення профілю (рекомендований розмір 125х125, не більше 2мб)</small></p>
+                            <p class="text-danger"><?php if(isset($error)) {
+                                echo $error; unset($error);
+                            }?></p>
                         </div>
                     </div>
 
@@ -349,10 +353,10 @@ require ('db_files/connection.php');
                     <?php if(isset($queryForDateComeDateReturnCurrentUserResult)){
                         foreach($queryForDateComeDateReturnCurrentUserResult as $thisValues):?>
                         <tr>
-                            <input type="hidden" value="<?php echo $thisValues['outside_id']?>" name="outside_id">
+                            <input type="hidden" value="<?= $thisValues['outside_id'] ?>" name="outside_id">
                             <td>
                                 <select class="custom-select" name="current_outside_type_update" id="current_outside_type_update">
-                                    <option value="<?php echo $thisValues['outside_type']?>" disabled selected><?php echo $thisValues['outside_type']?></option>
+                                    <option value="<?= $thisValues['outside_type']?>" disabled selected><?= $thisValues['outside_type']?></option>
                                     <option value="відпустка">відпустка</option>
                                     <option value="відрядження">відрядження</option>
                                     <option value="лікарняний">лікарняний</option>
@@ -369,7 +373,7 @@ require ('db_files/connection.php');
 
                     </form>
 
-                    <form method="get" action="<?php $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_add">
+                    <form method="get" action="<?= $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_add">
 
                         <tr>
                             <td><select type="text" class="form-control custom-select" name="add_new_type_of_outside_activity" required>

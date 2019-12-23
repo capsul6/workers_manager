@@ -1,5 +1,5 @@
 <?php
-require ('db_files/connection.php');
+require_once('../db_files/connection.php');
 
 session_start();
 //check for available session or cookies
@@ -60,11 +60,11 @@ if(isset($_GET['user_id'])) {
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Адміністративна панель</title>
+    <title>Статус працівників</title>
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="stylesheet/admin.css" rel="stylesheet">
+    <link href="../stylesheet/admin.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -78,27 +78,27 @@ if(isset($_GET['user_id'])) {
         <ul>
             <div class="row">
             <!--logo-->
-            <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
+            <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
             <!--navigation -->
             <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
-                <a href="main.php">Головна</a>
+                <a href="information_page.php">Головна</a>
                 <a
                     <?php
                     if(isset($_SESSION['login']) && $_SESSION['login'] == "capsul6" || isset($_COOKIE['login']) && $_COOKIE['login'] == "capsul6") {
-                        echo "href='admin.php'";
+                        echo "href='admin_page.php'";
                     }
                     else {
                         echo "aria-disabled=\"true\"";
                     }
                     ?> >Сторінка адміністратора</a>
-                <a href="edit_profile.php">Редагування та внесення данних</a>
+                <a href="edit_profile_page.php">Редагування та внесення данних</a>
             </li>
 
             <!--Photo and information-->
             <li class="col-xl-3  col-lg-3  nav_right">
                 <div class="card">
                     <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                    <img class="card-img-top" src="images/<?php echo $sessionUser['image_file_name'];?>" alt="Відсутнє зображення">
+                    <img class="card-img-top" src="../images/<?php echo $sessionUser['image_file_name'];?>" alt="Відсутнє зображення">
                      <div class="text_inside_card">
                          <p class="card-text"><?php if(isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
                                                 <?php echo $sessionUser['surname'] . " " . $sessionUser['name'];?>
@@ -112,7 +112,7 @@ if(isset($_GET['user_id'])) {
                      </div>
                     </div>
                         <!--Buttons with logout and edit profile actions-->
-                        <a href="edit_profile.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
+                        <a href="edit_profile_page.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
                         <a href="logout.php" class="btn btn-dark btn-sm">Вийти</a>
                  </div>
              </li>
@@ -146,18 +146,21 @@ if(isset($_GET['user_id'])) {
 
                         <form action="<?php echo $_SERVER['PHP_SELF']?>" method="get" id="listOfUsers_form">
 
-                        <!--just for getting id to make db query-->
                         <?php foreach ($AllUsers as $user):?>
+
                         <tr class='usersList'>
                         <td><input type='checkbox' name='user_id' value='<?php if(isset($user)){echo $user['user_id'];}?>'></td>
-                        <td><?php echo $user['name'];?></td>
-                        <td><?php echo $user['surname'];?></td>
-                        <td><?php echo $user['position'];?></td>
+                        <td><?= $user['name'];?></td>
+                        <td><?= $user['surname'];?></td>
+                        <td><?= $user['position'];?></td>
                         </tr>
 
                         <?php endforeach; ?>
-                        </tbody>
+
                         </form>
+
+                        </tbody>
+
                         </table>
 
     </div>
@@ -168,38 +171,30 @@ if(isset($_GET['user_id'])) {
 
             <thead class="thead-dark">
             <tr>
-                <th width="35%">Посада</th>
-                <th width="20%">Дата народження</th>
-                <th width="25%">Звання</th>
-                <th width="20%">Телефон</th>
+                <th >Посада</th>
+                <th >Дата народження</th>
+                <th >Звання</th>
+                <th >Телефон</th>
             </tr>
             </thead>
 
             <tbody>
 
-            <?php
-            if(isset($queryForUserInfoResult)){
-            echo "
+            <?php if(isset($queryForUserInfoResult)): ?>
             <tr>
-                <td id=\"resultPosition\">{$queryForUserInfoResult['position']}</td>
-                <td id=\"resultDateOfBirth\">{$queryForUserInfoResult['dateOfBirth']}</td>
-                <td id=\"resultRank\">{$queryForUserInfoResult['rank']}</td>
-                <td id=\"resultTellNumber\">{$queryForUserInfoResult['tellNumber']}</td>
+                <td id=\"resultPosition\"><?= $queryForUserInfoResult['position']; ?></td>
+                <td id=\"resultDateOfBirth\"><?= $queryForUserInfoResult['dateOfBirth']; ?></td>
+                <td id=\"resultRank\"><?= $queryForUserInfoResult['rank']; ?></td>
+                <td id=\"resultTellNumber\"><?= $queryForUserInfoResult['tellNumber']; ?></td>
             </tr>
-            ";
-            }
-
-            else {
-                echo "
-                <tr>
+            <?php else: ?>
+            <tr>
                 <td id=\"resultPosition\"></td>
                 <td id=\"resultDateOfBirth\"></td>
                 <td id=\"resultRank\"></td>
                 <td id=\"resultTellNumber\"></td>
             </tr>
-            ";
-            }
-            ?>
+            <?php endif ;?>
 
             </tbody>
 
@@ -237,15 +232,14 @@ if(isset($_GET['user_id'])) {
             <tbody>
             <tr class="table-warning">
                 <td>
-                    <?php if(isset($outsideSchedule)) :?>
+                    <?php if(isset($outsideSchedule)):?>
                     <?php foreach ($outsideSchedule as $dates): ?>
                     <ul>
-                        <li><?php echo $dates['outside_type'];?> з <span id=\"resultFrom\"><?php echo $dates['date_come'];?></span> по <span id=\"resultTo\"><?php echo $dates['date_return'];?></span></li>
+                        <li><?= $dates['outside_type'];?> з <span id=\"resultFrom\"><?= $dates['date_come'];?></span> по <span id=\"resultTo\"><?= $dates['date_return'];?></span></li>
                     </ul>
                     <?php endforeach;?>
-                    <?php endif ?>
-                    <?php if(!isset($outsideSchedule)): ?>
-                    <?php echo ""; endif;?>
+                    <?php else: echo ""; ?>
+                    <?php endif;?>
                 </td>
 
             </tr>
@@ -257,17 +251,18 @@ if(isset($_GET['user_id'])) {
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
 
 <script>
+
 $(document).ready(function(){
 
         let a = new URL(window.location.href);
 
-        if(a.searchParams.get("user_id") == null){
+        if (a.searchParams.get("user_id") == null) {
             localStorage.clear();
         }
 
-        if(localStorage.getItem("input-value")) {
-        for(let i = 0; i < $("input:checkbox").length; i++) {
-            if($("input:checkbox")[i].value == localStorage.getItem("input-value")){
+        if (localStorage.getItem("input-value")) {
+        for (let i = 0; i < $("input:checkbox").length; i++) {
+            if ($("input:checkbox")[i].value == localStorage.getItem("input-value")) {
                 $("input:checkbox")[i].setAttribute("checked", "checked");
             }
         }
@@ -283,7 +278,7 @@ $(document).ready(function(){
         $("#status").css("background-color", "white");
     }
 
-$(".usersList input:checkbox").on("change", function(){
+    $(".usersList input:checkbox").on("change", function(){
     for(let i = 0; i < $("input:checkbox").length; i++) {
         $("input:checkbox")[i].removeAttribute("checked");
     }

@@ -1,10 +1,10 @@
 
 <?php
-require 'db_files/connection.php';
+require_once '../db_files/connection.php';
 session_start();
 
 if(isset($_COOKIE['login']) or isset($_SESSION['login'])) {
-    header('Location: admin.php');
+    header('Location: admin_page.php');
 }
 
 function inputValidate($text) {
@@ -115,18 +115,18 @@ if(isset($_POST['login_button'])) {
         setrawcookie('login', $result['login'], time() + (7 * 24 * 60 * 60));
      }
     //and send user to next page
-     header("Location: admin.php");
+     header("Location: admin_page.php");
      }
 }
 ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Сторінка входу</title>
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="stylesheet/index.css" rel="stylesheet">
+    <link href="../stylesheet/index.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -140,7 +140,7 @@ if(isset($_POST['login_button'])) {
     <nav>
 
         <ul class="d-flex align-items-center">
-            <li><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
+            <li><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
         </ul>
 
     </nav>
@@ -167,16 +167,20 @@ if(isset($_POST['login_button'])) {
             <label class="form-check-label" for="exampleCheck1">Запам'ятати мене</label>
         </div>
 
-        <button id="login_button" type="submit" class="btn btn-outline-danger" name="login_button" data-toggle="tooltip" data-placement="right" title="Увійдіть, якщо зареєстровані">Увійти</button>
+        <button type="submit" class="btn btn-outline-danger login_button" name="login_button" data-toggle="tooltip" data-placement="right" title="Увійдіть, якщо зареєстровані">Увійти</button>
 
-        <a href="registration.php"><button id="login_button" type="button" class="btn btn-outline-primary" name="login_button" data-toggle="tooltip" data-placement="right" title="Зареєструйтеся, якщо ще цього не зробили">Зареєструватися</button></a>
+        <a href="registration.php"><button type="button" class="btn btn-outline-primary login_button" name="login_button" data-toggle="tooltip" data-placement="right" title="Зареєструйтеся, якщо ще цього не зробили">Зареєструватися</button></a>
+
+        <a href="forgot_email.php" id="forgot_password_text"><p class="font-italic text-center text-white">Забули пароль? Натисність, щоб поновити</p></a>
     </form>
 
 </div>
 
 
 </main>
-
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script>
 
     window.onload = function () {
@@ -189,9 +193,7 @@ if(isset($_POST['login_button'])) {
 
 
 </script>
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
 
 </body>
 </html>

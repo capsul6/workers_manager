@@ -1,5 +1,5 @@
 <?php
- require("db_files/connection.php");
+ require_once("../db_files/connection.php");
 
  function inputValidate($text) {
      $text = trim($text);
@@ -33,31 +33,32 @@
 
      //get data from db and check for repeat
      try{
+
          if(!empty($_POST['login'])) {
 
              $get_login = DBconfig::getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
 
-             $get_login->bindParam(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
+             $get_login->bindValue(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
 
              $get_login->execute();
 
-             while ($row = $get_login->fetch(PDO::FETCH_ASSOC)) {
+             $row = $get_login->fetch(PDO::FETCH_ASSOC);
 
                  if (inputValidate($_POST['login']) == $row['login']) {
                      $loginErrors = $errors['login_errors']['already_exist'];
                  }
-             }
+
          }
      } catch (PDOException $e) {
          die($e->getMessage());
      }
 
 
-     //verify login input
-
-     //check for non empty
-
-     if (inputValidate($_POST['login'] == '')) {
+     /*
+      * verify login input
+      * check for non empty
+     */
+     if (inputValidate(empty($_POST['login']))) {
 
          $loginErrors = $errors['login_errors']['empty'];
 
@@ -131,7 +132,7 @@
          try {
              $query = DBconfig::getDBConnection()->prepare("SELECT email FROM users WHERE email = :email_from_form;");
 
-             $query->bindParam(":email_from_form", $emailFromForm, PDO::PARAM_STR);
+             $query->bindValue(":email_from_form", $emailFromForm, PDO::PARAM_STR);
 
              $query->execute();
 
@@ -184,7 +185,7 @@
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="stylesheet/registration.css" rel="stylesheet">
+    <link href="../stylesheet/registration.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -198,7 +199,7 @@
 <nav>
 
     <ul class="d-flex align-items-center">
-        <li><a href="index.php"><img src="images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
+        <li><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
     </ul>
 
 </nav>

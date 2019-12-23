@@ -1,0 +1,117 @@
+.nav_left a {
+    float: left;
+}
+
+article {
+    margin-top: 50px;
+}
+
+embed {
+    width: 100%;
+    height: 300px;
+}
+
+small {
+    padding: 3px;
+}
+
+.nav_right img {
+    max-height: 100px;
+    max-width: 100px;
+}
+
+.card-body {
+    padding: 5px !important;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0px 40px 0px 40px;
+    margin-top: 16px !important;
+}
+
+.nav_center a {
+    text-decoration: none;
+    color: black;
+    margin: 15px;
+    padding: 15px;
+}
+
+.nav_center a:hover {
+    text-decoration: none;
+    color: black;
+    margin: 15px;
+    background-color: #fcfcfc;
+    border-radius: 5px;
+    padding: 15px;
+    border-bottom: black solid 3px;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+    text-align: center;
+}
+
+table {
+    margin-bottom: 0 !important;
+}
+
+p a {
+    color: black;
+    text-decoration: underline black;
+}
+
+footer {
+    margin-bottom: 75px;
+}
+
+.top_button {
+    position: fixed;
+    right: 10%;
+    opacity: 1;
+    visibility: hidden;
+    bottom: 50px;
+}
+
+.top_button:hover {
+    opacity: 0.8;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.top_button a {
+    margin: auto;
+    display: block;
+    text-decoration: none;
+    text-align: center;
+}
+
+.top_button a img {
+    width: 100%;
+    height: 100%;
+}
+
+#add_button {
+    position: absolute;
+    right: 5%;
+    top: 250px;
+    width: 75px;
+    height: 75px;
+    border-radius: 50px;
+    background-color: #bbbbbb;
+    opacity: 0.2;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+#add_button:hover {
+    opacity: 0.8;
+    background-color: #ededed;
+}
+
+
+
+
