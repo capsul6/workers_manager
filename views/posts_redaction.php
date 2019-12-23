@@ -263,13 +263,13 @@ if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
                         </div>
 
                         </form>
-
+                <hr>
                 </article>
                 <?php endforeach; ?>
                 <?php else: echo "There is no any posts"; ?>
                 <?php endif; ?>
 
-                <hr>
+
 
     </div>
 
@@ -313,14 +313,31 @@ if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
 
         //add button
         $('#add_button').click(function () {
-            $('#add_new_post_form').css(
+
+            $('#add_new_post_form').fadeToggle(
                 {
-                    "position": "relative",
-                    "display": "block",
-                    "top": "150px",
+                duration:"slow",
+                easing: "swing",
+                start: function () {
+                    $('article').fadeToggle("slow");
+                },
+                done: function(){
+                    $(this).css({
+                        "position": "relative",
+                        "top": "150px"
+                    });
+                }
                 }
                 );
-            $('article').css("visibility", "hidden");
+
+            /*$('#add_new_post_form').css(
+                {
+                    "position": "relative",
+                    "top": "150px"
+                }
+                );
+
+            */
         });
 
         $('#add_new_post_button').click(function () {
