@@ -1,6 +1,6 @@
 
 <?php
-require_once '../db_files/connection.php';
+require_once '../db_files/DBconfig.php';
 session_start();
 
 if(isset($_COOKIE['login']) or isset($_SESSION['login'])) {

@@ -1,5 +1,5 @@
 <?php
- require_once("../db_files/connection.php");
+ require_once("../db_files/DBconfig.php");
 
  function inputValidate($text) {
      $text = trim($text);

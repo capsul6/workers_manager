@@ -1,8 +1,6 @@
 <?php
-require_once('../db_files/connection.php');
-
+require_once ("../db_files/DBconfig.php");
 session_start();
-
 
 if(empty($_SESSION['login']) && empty($_COOKIE['login'])) {
     header("Location: index.php");
@@ -36,29 +34,52 @@ if(isset($_POST['update'])) {
 
         if (isset($_FILES['file']) && $_FILES['file']['size'] > 0) {
 
-            try {
-                $query = DBconfig::getDBConnection()->prepare("UPDATE articles SET
+            if(file_exists("../files/" . $_FILES['file']['name'])) {
+                try {
+                    $query = DBconfig::getDBConnection()->prepare("UPDATE articles SET
                     file_location = ?,
                     description = ?,
                     posted_date = ?
                     WHERE article_id = ?");
 
-                $result = $query->execute(array(
-                    "../files/" . $_FILES['file']['name'],
-                    $_POST['description'],
-                    $_POST['posted_date'],
-                    $_POST['article_id']));
+                    $result = $query->execute(array(
+                        "../files/" . $_FILES['file']['name'],
+                        $_POST['description'],
+                        $_POST['posted_date'],
+                        $_POST['article_id']));
 
-                if($result){
-                    header( "Location:" . $_SERVER['PHP_SELF'] . "?updated=true&" . "article_id=" . $_POST['article_id']);
+                    if($result){
+                        header( "Location:" . $_SERVER['PHP_SELF'] . "?updated=true&" . "article_id=" . $_POST['article_id']);
+                    }
+
+                } catch (PDOException $e) {
+                    echo $e->getMessage();
                 }
 
+            } elseif (!file_exists("../files/" . $_FILES['file']['name'])){
+                try {
+                    $query = DBconfig::getDBConnection()->prepare("UPDATE articles SET
+                    file_location = ?,
+                    description = ?,
+                    posted_date = ?
+                    WHERE article_id = ?");
 
-            } catch (PDOException $e) {
-                echo $e->getMessage();
+                    $result = $query->execute(array(
+                        "../files/" . $_FILES['file']['name'],
+                        $_POST['description'],
+                        $_POST['posted_date'],
+                        $_POST['article_id']));
+
+                    move_uploaded_file($_FILES['file']['tmp_name'], "../files/" . $_FILES['file']['name']);
+
+                    if($result){
+                        header( "Location:" . $_SERVER['PHP_SELF'] . "?updated=true&" . "article_id=" . $_POST['article_id']);
+                    }
+
+                } catch (PDOException $e) {
+                    echo $e->getMessage();
+                }
             }
-
-
 
         } elseif (isset($_FILES['file']) && $_FILES['file']['size'] <= 0) {
 
@@ -94,28 +115,37 @@ if(isset($_POST['update'])) {
             $query->bindParam(":id", $_POST['article_id'], PDO::PARAM_INT);
             $result = $query->execute();
 
-            header( "refresh:2;url=" . $_SERVER['PHP_SELF']);
+            if($result) {
+                header( "Location:" . $_SERVER['PHP_SELF'] . "?updated=false&" . "article_id=" . $_POST['article_id']);
+            }
 
         } catch (PDOException $e) {
             echo $e->getMessage();
         }
-}
+        }
 
-if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
+        if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
 
-    try {
-        $query = DBconfig::getDBConnection()->prepare("INSERT INTO articles(file_location, posted_date, description) VALUES (:location, CURDATE(), :description)");
-        $query->bindValue(":description", $_POST['new_post_description'], PDO::PARAM_STR);
-        $query->bindValue(":location", "../files/". $_FILES['new_post_filepath']['name'], PDO::PARAM_STR);
-        $query->execute();
-        $a = move_uploaded_file($_FILES['new_post_filepath']['tmp_name'], "../files/". $_FILES['new_post_filepath']['name']);
+            if (!file_exists("../files/" . $_FILES['new_post_filepath']['name'])) {
+
+                try {
+                    $query = DBconfig::getDBConnection()->prepare("INSERT INTO articles(file_location, posted_date, description) VALUES (:location, CURDATE(), :description)");
+                    $query->bindValue(":description", $_POST['new_post_description'], PDO::PARAM_STR);
+                    $query->bindValue(":location", "../files/" . $_FILES['new_post_filepath']['name'], PDO::PARAM_STR);
+                    $query->execute();
+                    move_uploaded_file($_FILES['new_post_filepath']['tmp_name'], "../files/" . $_FILES['new_post_filepath']['name']);
+                    header("Location:" . $_SERVER['PHP_SELF']);
+                } catch (Exception $e){
+                    echo $e->getMessage();
+                }
+
+            } elseif (file_exists("../files/" . $_FILES['new_post_filepath']['name'])){
+
+              $fileExist = "true";
+              header("Location:" . $_SERVER['PHP_SELF'] . "?fileExist=" . $fileExist);
+            }
 
 
-        header("Location:" . $_SERVER['PHP_SELF']);
-
-    } catch (Exception $e) {
-        echo $e->getMessage();
-    }
 }
 
 ?>
@@ -294,21 +324,36 @@ if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
             bsCustomFileInput.init();
         });
 
+        if(Url.queryString("fileExist") == "true") {
+            createShadowAndModalMenuWhenFileExist();
+        }
+
+
         const id_value = Url.queryString("article_id");
         let currentElement = $(`#${id_value}_row`);
-        let successAlertDiv = document.createElement("div");
-        successAlertDiv.className = "alert alert-success";
-        successAlertDiv.role = "alert";
-        successAlertDiv.innerHTML = "Дані успішно змінено";
-        successAlertDiv.style.textAlign= "center";
-        currentElement.prepend(successAlertDiv);
+        let AlertDiv = document.createElement("div");
+
+        if(Url.queryString("updated") == "true") {
+            addSuccessDiv();
+            }
+
+        function addSuccessDiv(){
+            AlertDiv.className = "alert alert-success";
+            AlertDiv.role = "alert";
+            AlertDiv.innerHTML = "Дані успішно змінено";
+            AlertDiv.style.textAlign= "center";
+            currentElement.prepend(AlertDiv);
+        };
 
         setTimeout(function(){
-            jQuery(".alert-success").fadeOut("slow", function () {
+            jQuery(".alert").fadeOut("slow", function () {
                 Url.updateSearchParam("updated");
                 Url.updateSearchParam("article_id");
                 Url.updateSearchParam(false);
             });
+            Url.updateSearchParam("updated");
+            Url.updateSearchParam("article_id");
+            Url.updateSearchParam(false);
         }, 2000);
 
         //add button
@@ -316,7 +361,7 @@ if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
 
             $('#add_new_post_form').fadeToggle(
                 {
-                duration:"slow",
+                duration: "slow",
                 easing: "swing",
                 start: function () {
                     $('article').fadeToggle("slow");
@@ -329,15 +374,6 @@ if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
                 }
                 }
                 );
-
-            /*$('#add_new_post_form').css(
-                {
-                    "position": "relative",
-                    "top": "150px"
-                }
-                );
-
-            */
         });
 
         $('#add_new_post_button').click(function () {
@@ -360,10 +396,85 @@ if(isset($_POST['add_new_post']) && $_FILES['new_post_filepath']['size'] > 0) {
                 behavior: 'smooth',
             })
         );
+
+
     };
 
 
+    function createShadowAndModalMenuWhenFileExist(){
+        let AlertDiv = document.createElement("div");
+        AlertDiv.className = "fileExistInfo";
+        AlertDiv.style.width = window.width + "px";
+        AlertDiv.style.height = window.height + "px";
+        AlertDiv.style.top = "0px";
+        AlertDiv.style.right = "0px";
+        AlertDiv.style.backgroundColor = "black";
+        AlertDiv.style.opacity = "0.8";
+        AlertDiv.style.position = "absolute";
+        $('body').append(AlertDiv);
 
+        let alertFileExistInfo = document.createElement("div");
+        alertFileExistInfo.className = "modal fade";
+        alertFileExistInfo.id = "exampleModalCenter";
+        alertFileExistInfo.tabIndex = -1;
+        alertFileExistInfo.setAttribute("role", "dialog");
+        alertFileExistInfo.setAttribute("aria-labelledby", "exampleModalCenterTitle");
+        alertFileExistInfo.setAttribute("aria-hidden", "true");
 
+        let alertFileExistInfo1 = document.createElement("div");
+        alertFileExistInfo1.className = "modal-dialog modal-dialog-centered";
+        alertFileExistInfo1.setAttribute("role", "document");
+
+        let alertFileExistInfo2 = document.createElement("div");
+        alertFileExistInfo2.className = "modal-content";
+
+        let alertFileExistInfo3 = document.createElement("div");
+        alertFileExistInfo3.className = "modal-header";
+
+        let alertFileExistInfo4 = document.createElement("button");
+        alertFileExistInfo4.type = "button";
+        alertFileExistInfo4.className = "close";
+        alertFileExistInfo4.setAttribute("data-dismiss","modal");
+        alertFileExistInfo4.setAttribute("aria-label", "Close");
+
+        let alertFileExistInfo5 = document.createElement("span");
+        alertFileExistInfo5.setAttribute("aria-hidden", "true");
+        alertFileExistInfo5.innerHTML = "&times";
+
+        let alertFileExistInfo6 = document.createElement("div");
+        alertFileExistInfo6.className = "modal-body";
+        alertFileExistInfo6.innerHTML = "Такий пост вже існує (Оберіть інший файл)";
+
+        let alertFileExistInfo7 = document.createElement("div");
+        alertFileExistInfo7.className = "modal-footer";
+
+        let alertFileExistInfo8 = document.createElement("button");
+        alertFileExistInfo8.type = "button";
+        alertFileExistInfo8.className = "btn btn-secondary";
+        alertFileExistInfo8.setAttribute("data-dismiss", "modal");
+        alertFileExistInfo8.innerHTML = "Close";
+
+        alertFileExistInfo7.append(alertFileExistInfo8);
+
+        $('body').append(alertFileExistInfo);
+        alertFileExistInfo.append(alertFileExistInfo1);
+        alertFileExistInfo1.append(alertFileExistInfo2);
+        alertFileExistInfo2.append(alertFileExistInfo3);
+        alertFileExistInfo2.append(alertFileExistInfo6);
+        alertFileExistInfo2.append(alertFileExistInfo7);
+        alertFileExistInfo3.append(alertFileExistInfo4);
+        alertFileExistInfo4.append(alertFileExistInfo5);
+
+        $('#exampleModalCenter').modal('show');
+
+        $('.close span').on("click", function () {
+            AlertDiv.remove();
+            Url.updateSearchParam("fileExist");
+        });
+        $('.modal-footer button').on("click", function () {
+            AlertDiv.remove();
+            Url.updateSearchParam("fileExist");
+        });
+    }
 </script>
 </html>

@@ -1,5 +1,5 @@
 <?php
-require_once('../db_files/connection.php');
+require_once('../db_files/DBconfig.php');
 
 session_start();
 
