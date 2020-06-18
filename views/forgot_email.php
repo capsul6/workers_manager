@@ -1,45 +1,44 @@
-<?php
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Сторінка входу</title>
+    <title>Відновлення паролю</title>
+
+    <link href="../web-inf/images/favicon.ico" rel="shortcut icon">
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="../stylesheet/forgot_email.css" rel="stylesheet">
+    <link href="../web-inf/stylesheet/forgot_email.css" rel="stylesheet">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <meta charset="UTF-8">
 </head>
 
-<body>
+<body class="d-flex flex-column justify-content-center align-items-center">
 
-<header>
-
-    <nav>
-        <ul>
-            <li><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-        </ul>
-    </nav>
-
+<header class="container-fluid">
+        <nav>
+        <a href="index.php">
+            <img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/>
+        </a>
+        </nav>
 </header>
+
+<main>
 
 <h3 class="text-center">Відновлення паролю</h3>
 
-<div class="row login_menu">
+<div class="login_menu">
 
     <form method="post" class="mx-auto">
 
         <div class="form-group">
             <label for="exampleInputLogin">Логін</label>
-            <input type="text" name="login" class="form-control" id="exampleInputLogin" autofocus="autofocus" placeholder="Логін" minlength="3" maxlength="30"><div class="text-warning input_warnings"></div>
+            <input type="text" name="login" class="form-control" id="exampleInputLogin" autofocus="autofocus" placeholder="Логін" minlength="3" maxlength="30" required><div class="text-warning input_warnings"></div>
         </div>
         <div class="form-group">
             <label for="exampleInputEmail">Емейл адреса</label>
-            <input type="email" class="form-control" id="exampleInputEmail" placeholder="Емейл адреса" minlength="3" maxlength="30" name="email"><div class="text-warning input_warnings"></div>
+            <input type="email" class="form-control" id="exampleInputEmail" placeholder="Емейл адреса" minlength="3" maxlength="30" name="email" required><div class="text-warning input_warnings"></div>
         </div>
 
         <button type="submit" class="btn btn-outline-primary send_password" name="send_password" data-toggle="tooltip" data-placement="right" title="Відправити пароль">Надіслати пароль</button>
@@ -48,9 +47,7 @@
 
 </div>
 
-
-
-
+</main>
 
 
 </body>
@@ -64,7 +61,7 @@
         let a = window.innerHeight;
         $("body").css("height", a);
         $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="tooltip"]').tooltip();
         });
     };
 

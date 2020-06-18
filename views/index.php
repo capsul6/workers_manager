@@ -1,6 +1,9 @@
-
 <?php
-require_once '../db_files/DBconfig.php';
+
+spl_autoload_register(function ($name){
+    require_once "../src/db_files/" . "$name" . ".php";
+});
+
 session_start();
 
 if(isset($_COOKIE['login']) or isset($_SESSION['login'])) {
@@ -38,8 +41,9 @@ if(isset($_POST['login_button'])) {
 */
     //get "login" field values from db based on user input
     try {
-        //get data from db and check if login is already in db or there`s no user with user typed "login"
-        $queryForGetUserLogin = DBconfig::getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
+        //get data from db and check if login is already in db or there`s no user with user`s typed "login"
+        $connection = new DB_config("root", "");
+        $queryForGetUserLogin = $connection->getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
         $queryForGetUserLogin->bindValue(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
         $queryForGetUserLogin->execute();
         $resultUserLogin = $queryForGetUserLogin->fetch(PDO::FETCH_ASSOC);
@@ -74,10 +78,12 @@ if(isset($_POST['login_button'])) {
     */
     //getting "login" and "password" values from DB based on user typed login and password
     try {
-      $queryForGetUserLoginAndPassword = DBconfig::getDBConnection()->prepare("SELECT login, password FROM users WHERE login = :login");
+      $connection = new DB_config("root", "");
+      $queryForGetUserLoginAndPassword = $connection->getDBConnection()->prepare("SELECT login, password FROM users WHERE login = :login");
       $queryForGetUserLoginAndPassword->bindValue(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
       $queryForGetUserLoginAndPassword->execute();
       $result = $queryForGetUserLoginAndPassword->fetch(PDO::FETCH_ASSOC);
+      $connection = null;
     } catch (PDOException $e) {
         die($e->getMessage());
     }
@@ -103,7 +109,7 @@ if(isset($_POST['login_button'])) {
         $passwordErrors = $errors['password_errors']['empty'];
     }
 
-        //check if all inputs are correctly
+    //check if all inputs are correctly
     if ($result['login'] == inputValidate($_POST['login']) && password_verify($_POST['password'], $result['password']) && empty($loginErrors) && empty($passwordErrors)) {
 
     //if all inputs are correctly set session
@@ -126,7 +132,8 @@ if(isset($_POST['login_button'])) {
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="../stylesheet/index.css" rel="stylesheet">
+    <link href="../web-inf/stylesheet/index.css" rel="stylesheet">
+    <link href="../web-inf/images/favicon.ico" rel="shortcut icon" type="image/x-icon">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -136,42 +143,40 @@ if(isset($_POST['login_button'])) {
 <body>
 
 
-<header class="head">
+<header class="container-fluid">
     <nav>
-
-        <ul class="d-flex align-items-center">
-            <li><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-        </ul>
-
+    <a href="index.php">
+        <img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/>
+    </a>
     </nav>
 </header>
 
 
-<main class="container main">
+<main class="container">
 
 <h3 class="text-center">Система обліку працівників відділу забезпечення діяльності керівництва ДДЗ НПУ</h3>
 
 <div class="row login_menu">
 
-    <form method="post" class="mx-auto">
+    <form method="POST" class="mx-auto">
         <div class="form-group">
             <label for="exampleInputLogin">Логін</label>
-            <input type="text" name="login" class="form-control" id="exampleInputLogin" autofocus="autofocus" placeholder="Введіть логін" minlength="3" maxlength="30" value="<?php if(isset($_POST['login_button'])){echo $_POST['login'];}?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
+            <input type="text" name="login" class="form-control" id="exampleInputLogin" autofocus="autofocus" placeholder="Введіть логін" minlength="3" maxlength="30" value="<?php if(isset($_POST['login_button'])){echo $_POST['login'];}?>" required><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
         </div>
         <div class="form-group">
             <label for="exampleInputPassword1">Пароль</label>
-            <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Пароль" minlength="3" maxlength="30" name="password" value="<?php if(isset($_POST['login_button'])){echo $_POST['password'];}?>"><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
+            <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Пароль" minlength="3" maxlength="30" name="password" value="<?php if(isset($_POST['login_button'])){echo $_POST['password'];}?>" required><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
         </div>
         <div class="form-group form-check">
             <input type="checkbox" class="form-check-input" id="exampleCheck1" name="remember_me">
             <label class="form-check-label" for="exampleCheck1">Запам'ятати мене</label>
         </div>
 
-        <button type="submit" class="btn btn-outline-danger login_button" name="login_button" data-toggle="tooltip" data-placement="right" title="Увійдіть, якщо зареєстровані">Увійти</button>
+        <button type="submit" class="btn btn-outline-danger w-100 login_button" name="login_button" data-toggle="tooltip" data-placement="right" title="Увійдіть, якщо зареєстровані">Увійти</button>
 
-        <a href="registration.php"><button type="button" class="btn btn-outline-primary login_button" name="login_button" data-toggle="tooltip" data-placement="right" title="Зареєструйтеся, якщо ще цього не зробили">Зареєструватися</button></a>
+        <a href="registration.php"><button type="button" class="btn btn-outline-primary w-100 login_button" name="login_button" data-toggle="tooltip" data-placement="right" title="Зареєструйтеся, якщо ще цього не зробили">Зареєструватися</button></a>
 
-        <a href="forgot_email.php" id="forgot_password_text"><p class="font-italic text-center text-white">Забули пароль? Натисність, щоб поновити</p></a>
+        <a href="forgot_email.php" id="forgot_password_text"><p class="font-italic text-center text-white" >Забули пароль? Натисність, щоб поновити</p></a>
     </form>
 
 </div>

@@ -1,23 +1,18 @@
-.form-group {
-    text-align: center;
+header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-top: 16px;
+    padding-left: 55px!important;
 }
+
 
 .login_menu {
     border-radius: 8px;
     background: linear-gradient(to top left, #000080, #b30000);
-    width: 100%;
-}
-
-.head {
-    position: absolute;
-    width: 100%;
-    top: 0;
-}
-
-nav ul {
-    list-style: none;
-    padding: 0px 40px 0px 40px;
-    margin-top: 16px!important;
+    margin: 0;
+    padding: 20px;
+    text-align: center;
 }
 
 body {
@@ -41,12 +36,6 @@ form {
 
 .login_button {
     margin-top: 10px;
-    width: 100%;
-}
-
-.login_menu {
-    margin: 0;
-    padding: 20px 0 20px 0;
 }
 
 #forgot_password_text {

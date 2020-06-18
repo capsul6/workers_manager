@@ -1,5 +1,5 @@
 <?php
- require_once("../db_files/DBconfig.php");
+ require_once("../db_files/DB_config.php");
 
  function inputValidate($text) {
      $text = trim($text);
@@ -177,15 +177,16 @@
 
 
  ?>
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-
     <title>Сторінка реєстрації</title>
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="../stylesheet/registration.css" rel="stylesheet">
+    <link href="../web-inf/stylesheet/registration.css" rel="stylesheet">
+
+    <link href="../web-inf/images/favicon.ico" rel="shortcut icon">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -194,19 +195,16 @@
 
 <body>
 
-
-<header class="head">
-<nav>
-
-    <ul class="d-flex align-items-center">
-        <li><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-    </ul>
-
-</nav>
+<header class="container-fluid">
+    <nav>
+        <a href="index.php">
+            <img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/>
+        </a>
+    </nav>
 </header>
 
 
-<main class="container main">
+<main class="container">
 
 <h3 class="text-center">Форма реєстрації</h3>
 
@@ -214,26 +212,25 @@
 
     <form method="post" action="<?php $_SERVER['PHP_SELF']?>" class="mx-auto">
         <div class="form-group">
-            <label for="Login">Логін</label>
-            <input type="text" class="form-control" id="Login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>"><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
+            <label for="login">Логін</label>
+            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" required><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
         </div>
         <div class="form-group">
             <label for="password">Пароль</label>
-            <input type="password" class="form-control" id="Password" placeholder="Пароль" name="password" maxlength="30" minlength="3"><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
+            <input type="password" class="form-control" id="password" placeholder="Пароль" name="password" maxlength="30" minlength="3" required><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
         </div>
         <div class="form-group">
-            <label for="Password_verify">Пароль ще раз</label>
-            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30"><div class="text-warning input_warnings"><?php echo $repeatPasswordErrors;?></div>
+            <label for="password_verify">Пароль ще раз</label>
+            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30" required><div class="text-warning input_warnings"><?php echo $repeatPasswordErrors;?></div>
         </div>
             <div class="form-group">
-            <label for="Email">Емейл (Якщо забудете пароль, ми надішлемо його на цю адресу)</label>
-            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>"><div class="text-warning input_warnings"><?php echo $emailErrors;?></div>
+            <label for="email">Емейл (Якщо забудете пароль, ми надішлемо його на цю адресу)</label>
+            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>" required><div class="text-warning input_warnings"><?php echo $emailErrors;?></div>
             </div>
         <button id="registration_button" type="submit" class="btn btn-outline-success" name="reg_button" data-toggle="tooltip" data-placement="right" title="Натисніть, щоб зареєструватися">Зареєструватися</button>
     </form>
 
 </div>
-
 
 </main>
 

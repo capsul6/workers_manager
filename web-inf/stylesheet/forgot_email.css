@@ -1,0 +1,41 @@
+header {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+nav {
+    padding-top: 15px;
+}
+
+main {
+    width: 50%;
+}
+
+.login_menu {
+    border-radius: 8px;
+    background: linear-gradient(to top left, #000080, #b30000);
+}
+
+.form-group label {
+    color: white;
+}
+
+form {
+    text-align: center;
+    width: 50%;
+}
+
+.input_warnings {
+    height: 20px;
+}
+
+.send_password {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.login_menu {
+    margin: 0;
+    padding: 20px;
+}

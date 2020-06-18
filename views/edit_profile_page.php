@@ -1,5 +1,5 @@
 <?php
-require_once('../db_files/DBconfig.php');
+require_once('../src/db_files/DB_config.php');
 
         session_start();
         if(!isset($_SESSION['login']) && !isset($_COOKIE['login'])) {
@@ -8,7 +8,8 @@ require_once('../db_files/DBconfig.php');
 
         //getting info from DB about current user
         try {
-            $query = DBconfig::getDBConnection()->prepare("SELECT *
+            $connection = new DB_config("root", "");
+            $query = $connection->getDBConnection()->prepare("SELECT *
                   FROM workers
                   FULL JOIN users
                   ON user_id = users.id
@@ -16,13 +17,15 @@ require_once('../db_files/DBconfig.php');
             $query->bindValue(':user_login', $_SESSION['login'], PDO::PARAM_STR);
             $query->execute();
             $sessionUser = $query->fetch(PDO::FETCH_ASSOC);
+            $connection = null;
         } catch (PDOException $e) {
             echo $e->getMessage();
         }
 
         //getting list of information about when current user went out of work and return to work
         try{
-            $queryForDateComeDateReturnCurrentUser = DBconfig::getDBConnection()->prepare("SELECT e.outside_id, e.date_come, e.date_return, e.outside_type
+            $connection = new DB_config("root", "");
+            $queryForDateComeDateReturnCurrentUser = $connection->getDBConnection()->prepare("SELECT e.outside_id, e.date_come, e.date_return, e.outside_type
                 FROM outside_records e
                 LEFT JOIN workers w
                 ON e.worker_id = w.worker_id
@@ -33,6 +36,7 @@ require_once('../db_files/DBconfig.php');
             $queryForDateComeDateReturnCurrentUser->bindValue(":id", $sessionUser['worker_id'], PDO::PARAM_INT);
             $queryForDateComeDateReturnCurrentUser->execute();
             $queryForDateComeDateReturnCurrentUserResult = $queryForDateComeDateReturnCurrentUser->fetchAll(PDO::FETCH_ASSOC);
+            $connection = null;
 
         } catch (PDOException $e) {
             echo $e->getMessage();
@@ -70,8 +74,9 @@ require_once('../db_files/DBconfig.php');
                 //write image to variable
                 $image = addslashes(file_get_contents($_FILES['file']['tmp_name']));
 
+                $connection = new DB_config("root", "");
                 //updating information that was changed by user
-                $forUpdateWorkerValues = DBconfig::getDBConnection()->prepare("UPDATE workers SET
+                $forUpdateWorkerValues = $connection->getDBConnection()->prepare("UPDATE workers SET
                      position  = ?,
                      dateOfBirth = ?,
                      rank = ?,
@@ -89,6 +94,7 @@ require_once('../db_files/DBconfig.php');
                 //save file in specific directory
                 $filesDirectory = __DIR__ . "../images/" . $_FILES['file']['name'];
                 move_uploaded_file($_FILES['file']['tmp_name'], $filesDirectory);
+                $connection = null;
 
             } catch (PDOException $e) {
                 echo $e->getMessage();
@@ -103,7 +109,8 @@ require_once('../db_files/DBconfig.php');
         } elseif (isset($_POST['button_success']) && $_FILES['file']['size'] <= 0) {
 
             try{
-                $forUpdateWorkerValues = DBconfig::getDBConnection()->prepare("UPDATE workers SET
+                $connection = new DB_config("root", "");
+                $forUpdateWorkerValues = $connection->getDBConnection()->prepare("UPDATE workers SET
                      position  = ?,
                      dateOfBirth = ?,
                      rank = ?,
@@ -114,6 +121,8 @@ require_once('../db_files/DBconfig.php');
 
                 $forUpdateWorkerValues->execute(array($_POST['position'], $_POST['dateOfBirth'], $_POST['rank'],
                 $_POST['tellNumber'], $_POST['surname'], $_POST['name'], $sessionUser['user_id']));
+
+                $connection = null;
 
             header("Location:" . $_SERVER['PHP_SELF']);
 
@@ -126,7 +135,8 @@ require_once('../db_files/DBconfig.php');
         if(isset($_GET['addNew_outside_activity'])) {
 
             try{
-                $forAddNewOutsideActivity = DBconfig::getDBConnection()->prepare("
+                $connection = new DB_config("root", "");
+                $forAddNewOutsideActivity = $connection->getDBConnection()->prepare("
                 INSERT INTO outside_records (date_come, date_return, worker_id, outside_type)
                 VALUES (:date_come, :date_return, :worker_id, :outside_type);
                 ");
@@ -136,6 +146,8 @@ require_once('../db_files/DBconfig.php');
                 $forAddNewOutsideActivity->bindParam(":outside_type", $_GET['add_new_type_of_outside_activity']);
 
                 $forAddNewOutsideActivity->execute();
+
+                $connection = null;
 
                 header("Location:" . $_SERVER['PHP_SELF']);
 
@@ -148,12 +160,15 @@ require_once('../db_files/DBconfig.php');
         //delete outside_activity that was typed
         if(isset($_GET['delete_outside_activity'])) {
             try{
-                $forDeleteOutsideActivity = DBconfig::getDBConnection()->prepare("
+                $connection = new DB_config("root", "");
+                $forDeleteOutsideActivity = $connection->getDBConnection()->prepare("
                 DELETE FROM outside_records WHERE outside_id = :outside_id ;
                 ");
                 $forDeleteOutsideActivity->bindParam(":outside_id", $_GET['outside_id']);
 
                 $forDeleteOutsideActivity->execute();
+
+                $connection = null;
 
                 header("Location:" . $_SERVER['PHP_SELF']);
 
@@ -165,7 +180,9 @@ require_once('../db_files/DBconfig.php');
         //update outside_activity that was typed
         if(isset($_GET['update_outside_activity'])) {
         try{
-        $forUpdateOutsideActivityForCurrentUser = DBconfig::getDBConnection()->prepare("
+
+        $connection = new DB_config("root", "");
+        $forUpdateOutsideActivityForCurrentUser = $connection->getDBConnection()->prepare("
                 UPDATE outside_records
                 SET outside_type = :outside_type, date_come = :date_come, date_return = :date_return
                 WHERE outside_id = :outside_id ;
@@ -176,6 +193,8 @@ require_once('../db_files/DBconfig.php');
         $forUpdateOutsideActivityForCurrentUser->bindParam(":date_return", $_GET['current_date_return_update']);
 
         $forUpdateOutsideActivityForCurrentUser->execute();
+
+        $connection = null;
 
         header("Location:" . $_SERVER['PHP_SELF']);
 
@@ -190,9 +209,11 @@ require_once('../db_files/DBconfig.php');
         <head>
             <title>Введення та зміна інформації</title>
 
+            <link href="../web-inf/images/favicon.ico" rel="shortcut icon">
+
             <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-            <link href="../stylesheet/edit_profile.css" rel="stylesheet">
+            <link href="../web-inf/stylesheet/edit_profile_page.css" rel="stylesheet">
 
             <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -206,7 +227,7 @@ require_once('../db_files/DBconfig.php');
                 <ul>
                     <div class="row">
                         <!--logo-->
-                        <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
+                        <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
                         <!--navigation -->
                         <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
                             <a href="information_page.php">Головна</a>
@@ -226,7 +247,7 @@ require_once('../db_files/DBconfig.php');
                         <li class="col-xl-3  col-lg-3  nav_right">
                             <div class="card">
                                 <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                                    <img class="card-img-top" src="../images/<?= $sessionUser['image_file_name']?>" alt="Відсутнє зображення">
+                                    <img class="card-img-top" src="../web-inf/images/<?= $sessionUser['image_file_name']?>" alt="Відсутнє зображення">
                                     <div class="text_inside_card text-center">
                                         <p class="card-text">
                                             <?php if (isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
@@ -246,7 +267,7 @@ require_once('../db_files/DBconfig.php');
                                 </div>
                                 <!--Buttons with logout and edit profile actions-->
                                 <a href="edit_profile_page.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
-                                <a href="logout.php" class="btn btn-dark btn-sm">Вийти</a>
+                                <a href="logout_page.php" class="btn btn-dark btn-sm">Вийти</a>
                             </div>
                         </li>
                 </ul>
@@ -369,7 +390,8 @@ require_once('../db_files/DBconfig.php');
                                 <button type="submit" class="btn btn-danger delete" name="delete_outside_activity">Видалити</button>
                             </td>
                         </tr>
-                        <?php endforeach;}?>
+                        <?php endforeach;
+                        }?>
 
                     </form>
 

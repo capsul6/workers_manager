@@ -1,6 +1,5 @@
 <?php
-require_once('../db_files/DBconfig.php');
-
+require "../src/db_files/DB_config.php";
 session_start();
 
 if(empty($_SESSION['login']) && empty($_COOKIE['login'])) {
@@ -9,7 +8,8 @@ if(empty($_SESSION['login']) && empty($_COOKIE['login'])) {
 
 //connect to db and get information based on Session "login" value for user account
 try {
-$query = DBconfig::getDBConnection()->prepare("SELECT e.name, e.surname, e.image, e.position, e.image_file_name
+$connection = new DB_config("root", "");
+$query = $connection->getDBConnection()->prepare("SELECT e.name, e.surname, e.image, e.position, e.image_file_name, e.permission_type
 FROM workers e
 LEFT JOIN users a
 ON e.user_id = a.id
@@ -17,18 +17,12 @@ WHERE a.login = :user_login");
 $query->bindValue(':user_login', $_SESSION['login'], PDO::PARAM_STR);
 $query->execute();
 $sessionUser = $query->fetch(PDO::FETCH_ASSOC);
+$connection = null;
 } catch (PDOException $e) {
 echo "Error with content: " . $e->getMessage();
 }
-
 //get all posts from DB
-try {
-$query = DBconfig::getDBConnection()->query("SELECT file_location, description, posted_date
-FROM articles;");
-$postsList = $query->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-echo "Error with content: " . $e->getMessage();
-}
+
 
 /*
 Pagination logic
@@ -39,17 +33,19 @@ $countOfPostsPerPage = 20;
 $countOfPages = $countOfPostsInDB = 0;
 //get count of posts from DB
 try {
-    $countOfPostsInDB = DBconfig::getDBConnection()->query("SELECT COUNT(article_id) FROM articles WHERE posted_date > '2018-01-01'")->fetchColumn();
+    $connection = new DB_config("root", "");
+    $countOfPostsInDB = $connection->getDBConnection()->query("SELECT COUNT(article_id) FROM articles WHERE posted_date > '2018-01-01'")->fetchColumn();
+    $connection = null;
 } catch (PDOException $e) {
     echo "Error with content: " . $e->getMessage();
 }
 
 
-//if count of posts in DB equal to 20 then page will renders only one page
+//if sum of posts in DB equal to 20 then page will render only one page
 if($countOfPostsInDB <= 20) {
     $countOfPages = 1;
 } else {
-//if count of posts in DB more than 20 then get count of pages
+//if sum of posts in DB more than 20 then get count of pages
     $countOfPages = $countOfPostsInDB/$countOfPostsPerPage;
     //if number is decimal with comma then adding 0.5 and rounding it
     if(is_double($countOfPages)) {
@@ -58,21 +54,34 @@ if($countOfPostsInDB <= 20) {
     }
 }
 
-//we are defining array of pages and filling it
+//we defining an array of pages and filling it
 $pagination = array();
 for($i = 0; $i < $countOfPages; $i++) {
     $pagination[$i] = $i+1;
 }
 
 if(empty($_GET['page'])) {
-    $listOfPostsDependOnPage = DBconfig::getDBConnection()->query(
-        "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $connection = new DB_config("root", "");
+        $listOfPostsDependOnPage = $connection->getDBConnection()->query(
+            "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
+        $connection = null;
+    } catch (Exception $e){
+        echo "Error with content: " . $e->getMessage();
+    }
+
 }
 
 if(isset($_GET['page'])) {
     if($_GET['page'] == 1) {
-        $listOfPostsDependOnPage = DBconfig::getDBConnection()->query(
-            "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' LIMIT 20;")->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $connection = new DB_config("root", "");
+            $listOfPostsDependOnPage = $connection->getDBConnection()->query(
+                "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
+            $connection = null;
+        } catch (Exception $e){
+            echo "Error with content: " . $e->getMessage();
+        }
     } elseif($_GET['page'] > 1) {
         //get posts from DB by url value
         $offsetValue = ($_GET['page'] - 1) * $countOfPostsPerPage;
@@ -86,16 +95,65 @@ if(isset($_GET['page'])) {
             }
         }
 
-        $listOfPostsDependOnPage = DBconfig::getDBConnection()->query(
-            "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' LIMIT 20 OFFSET " . $offsetValue . ";")->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $connection = new DB_config("root", "");
+            $listOfPostsDependOnPage = $connection->getDBConnection()->query(
+                "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' LIMIT 20 OFFSET " . $offsetValue . ";")->fetchAll(PDO::FETCH_ASSOC);
+            $connection = null;
+        } catch (Exception $e){
+            echo "Error with content: " . $e->getMessage();
+        }
 
     }
 }
 
+function ReturnFiveArrayLinks(Array $IncomeArray) : Array {
 
-function ReturnPageNumber(Array $currentPage) :array {
+    //initialize new empty array
+    $ArrayWithFiveElements = array();
 
-        $buttons_array = array('prev_page'=>0, 'next_page' => 0);
+    //if array of posts contains only one page or if total amount of elements less than 5 then we render it without any changes
+    if (count($IncomeArray) == 1 || count($IncomeArray) <= 5) {
+
+        return $IncomeArray;
+
+    } elseif (count($IncomeArray) > 5) {
+
+        if (current($IncomeArray) < 3) {
+            for ($i = 0; $i < 5; $i++) {
+                $ArrayWithFiveElements[$i] = $i + 1;
+            }
+            return $ArrayWithFiveElements;
+        }
+
+        //we create correct rendering of last elements if count of elements > 5
+        if( (current($IncomeArray) + 2) > count($IncomeArray) ) {
+
+            $number = (current($IncomeArray) + 2) - count($IncomeArray);
+
+            for($i = 0; $i < 5; $i++) {
+                if($number == 1){
+                    $ArrayWithFiveElements[$i] = current($IncomeArray) + $i - 3;
+
+                } elseif ($number == 2){
+                    $ArrayWithFiveElements[$i] = current($IncomeArray) + $i - 4;
+
+                }
+            }
+
+        } else {
+            for ($i = 0; $i < 5; $i++) {
+                $ArrayWithFiveElements[$i] = current($IncomeArray) + $i - 2;
+            }
+        }
+
+        return $ArrayWithFiveElements;
+    }
+}
+
+function ReturnPageNumber(Array $currentPage) : Array {
+
+        $buttons_array = array('prev_page' => 0, 'next_page' => 0);
 
         if (current($currentPage) == 1) {
            $buttons_array['prev_page'] = 1;
@@ -122,7 +180,8 @@ function ReturnPageNumber(Array $currentPage) :array {
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="../stylesheet/information.css" rel="stylesheet">
+    <link href="../web-inf/stylesheet/information_page.css" rel="stylesheet">
+    <link href="../web-inf/images/favicon.ico" rel="shortcut icon">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -132,63 +191,18 @@ function ReturnPageNumber(Array $currentPage) :array {
 
 <body>
 
-<header class="container-fluid">
-    <nav>
-        <ul>
-            <div class="row">
-                <!--logo-->
-                <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-                <!--navigation -->
-                <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
-                    <a href="information_page.php">Головна</a>
-                    <a
-                        <?php
-                        if(isset($_SESSION['login']) && $_SESSION['login'] == "capsul6" || isset($_COOKIE['login']) && $_COOKIE['login'] == "capsul6") {
-                            echo "href=\"admin_page.php\"";
-                        }
-                        else {
-                            echo "aria-disabled=\"true\"";
-                        }
-                        ?>
-                        >Сторінка адміністратора</a>
-                    <a href="edit_profile_page.php">Редагування та внесення данних</a>
-                </li>
-
-                <!--Photo and information-->
-                <li class="col-xl-3  col-lg-3  nav_right">
-                    <div class="card">
-                        <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                            <img class="card-img-top" src="../images/<?php echo $sessionUser['image_file_name'];?>" alt="Відсутнє зображення">
-                            <div class="text_inside_card">
-                                <p class="card-text"><?php if(isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
-                                        <?= $sessionUser['surname'] . " " . $sessionUser['name'];?>
-                                        <?php else: echo "Не вказані дані";?>
-                                        <?php endif;?></p>
-                                <p class="card-text"><?php if(isset($sessionUser['position'])):?>
-                                        <?= $sessionUser['position'];?>
-                                        <?php else: echo "Не вказані дані";?>
-                                        <?php endif;?>
-                                </p>
-                            </div>
-                        </div>
-                        <!--Buttons with logout and edit profile actions-->
-                        <a href="edit_profile_page.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
-                        <a href="logout.php" class="btn btn-dark btn-sm">Вийти</a>
-                    </div>
-                </li>
-        </ul>
-    </nav>
-</header>
+<?php include_once "navigation_panel/header.php";?>
 
 <main>
 
 <div class="container">
 
-    <?php if(  (isset($_SESSION['login']) || isset($_COOKIE['login'])) && ($_SESSION['login']) == "capsul6" || $_COOKIE['login'] == "capsul6") {
-        echo "
-        <a id=\"add_button\" href=\"posts_redaction.php\" data-toggle=\"tooltip\" data-placement=\"right\" title=\"Додати новий пост\"><img src=\"../images/add.svg\"></a>
-        ";
-    }?>
+    <?php
+
+    if( (isset($_SESSION['login']) || isset($_COOKIE['login']) ) && $sessionUser['permission_type'] == "admin"): ?>
+        <?php  echo "<a id=\"add_button\" href=\"posts_redaction.php\" data-toggle=\"tooltip\" data-placement=\"right\" title=\"Додати новий пост\"><img src=\"../web-inf/images/add.svg\"></a>"; ?>
+        <?php  else: echo "";?>
+    <?php endif;?>
 
     <?php if(isset($listOfPostsDependOnPage)): ?>
     <?php foreach($listOfPostsDependOnPage as $post): ?>
@@ -206,8 +220,10 @@ function ReturnPageNumber(Array $currentPage) :array {
             <div class="row">
 
             <div class="col-sm-6 col-md-6 col-lg-6">
+            <object>
             <embed type="<?= mime_content_type($post['file_location']); ?>" src="<?= $post['file_location']; ?>">
-            <p><a href="<?= $post['file_location']; ?>" download="">скачати документ</a></p>
+            </object>
+            <p><a href="<?= $post['file_location']; ?>" download>скачати документ</a></p>
             <p><a href="<?= $post['file_location']; ?>" target="_blank">переглянути у новому вікні</a></p>
             </div>
 
@@ -240,10 +256,12 @@ function ReturnPageNumber(Array $currentPage) :array {
         <form method="GET" action="<?= $_SERVER['PHP_SELF']; ?>">
         <ul class="pagination justify-content-center">
             <li class="page-item outer"><a class="page-link" href="<?= $_SERVER['PHP_SELF'] . "?page=" . ReturnPageNumber($pagination)['prev_page']; ?>">Попередня сторінка</a></li>
-            <?php foreach ($pagination as $value): ?>
+            <?php foreach (ReturnFiveArrayLinks($pagination) as $value): ?>
             <li class="page-item"><a class="page-link inner" href="<?= $_SERVER['PHP_SELF'] . "?page=" . $value; ?>"><?= $value; ?></a></li>
             <?php endforeach; ?>
             <li class="page-item outer"><a class="page-link" href="<?= $_SERVER['PHP_SELF'] . "?page=" . ReturnPageNumber($pagination)['next_page']; ?>">Наступна сторінка</a></li>
+
+
         </ul>
         </form>
 
@@ -254,7 +272,7 @@ function ReturnPageNumber(Array $currentPage) :array {
 </footer>
 
 <div class="top_button">
-    <a><img src="../images/up-arrow.png"></a>
+    <a><img src="../web-inf/images/up-arrow.png"></a>
 </div>
 
 </body>
@@ -263,7 +281,10 @@ function ReturnPageNumber(Array $currentPage) :array {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 <script>
-    window.onload = () => {
+
+    $(function() {
+
+
         let getParameterByName = (url, name) =>  {
             if ("URLSearchParams" in window) {
                 //Browser supports URLSearchParams
@@ -290,13 +311,17 @@ function ReturnPageNumber(Array $currentPage) :array {
 
 
         let b = document.getElementsByClassName("page-link inner");
+
+
         for(let innerTEXT of b) {
+
            let page = window.location.href;
-           if (innerTEXT.innerHTML == getParameterByName(page, "page")) {
-                innerTEXT.parentElement.setAttribute("class", "page-item active");
-                innerTEXT.style.backgroundColor = "black";
-                innerTEXT.style.borderColor = "black";
-           } else if(getParameterByName(page, "page") == null) {
+
+            if(getParameterByName(page, "page") == null) {
+                b[0].parentElement.setAttribute("class", "page-item active");
+                b[0].style.backgroundColor = "black";
+                b[0].style.borderColor = "black";
+            } else if (innerTEXT.innerHTML == getParameterByName(page, "page")) {
                 innerTEXT.parentElement.setAttribute("class", "page-item active");
                 innerTEXT.style.backgroundColor = "black";
                 innerTEXT.style.borderColor = "black";
@@ -319,10 +344,10 @@ function ReturnPageNumber(Array $currentPage) :array {
         );
 
         $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
+            $('[data-toggle="tooltip"]').tooltip();
         });
 
-    };
+    });
 
 
 </script>

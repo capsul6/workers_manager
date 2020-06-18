@@ -1,8 +1,10 @@
 <?php
 
-require_once ("DBconfig.php");
+require_once("DB_config.php");
 
-$connection = DBconfig::getDBConnection();
+
+$DB_object = new DB_config("root", "");
+$connection = $DB_object->getDBConnection();
 
 if(!$connection) {
     die("Ошибка при подключении к БД" . $connection->errorCode());
@@ -30,7 +32,7 @@ tellNumber INT(50),
 dateOfBirth DATE,
 position VARCHAR(50) NOT NULL,
 rank VARCHAR(50) NOT NULL,
-privilage VARCHAR(255) NOT NULL DEFAULT NULL,
+permission_type VARCHAR(255) NOT NULL DEFAULT NULL,
 user_id INT(20),
 outside_id INT(20),
 CONSTRAINT 'user_id' FOREIGN KEY (user_id) REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE
@@ -53,6 +55,5 @@ posted_date DATE,
 description VARCHAR(255) 
 );
 ";
-
 ?>
 

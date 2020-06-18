@@ -1,19 +1,18 @@
-ul {
-    list-style: none;
-    padding: 0px 40px 0px 40px;
-    margin-top: 16px !important;
-}
-
 header {
     position: absolute;
-    width: 100%;
     top: 0;
+    left: 0;
+}
+
+nav {
+    padding-top: 15px;
 }
 
 .login_menu {
     border-radius: 8px;
     background: linear-gradient(to top left, #000080, #b30000);
-    width: 50%;
+    margin: 0;
+    padding: 20px;
 }
 
 body {
@@ -36,12 +35,7 @@ form {
     height: 20px;
 }
 
-.send_password {
-    margin-top: 10px;
+#registration_button {
     width: 100%;
 }
 
-.login_menu {
-    margin: 0;
-    padding: 20px 0 20px 0;
-}

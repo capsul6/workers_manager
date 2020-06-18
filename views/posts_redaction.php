@@ -1,14 +1,16 @@
 <?php
-require_once ("../db_files/DBconfig.php");
+require_once("../src/db_files/DB_config.php");
 session_start();
 
 if(empty($_SESSION['login']) && empty($_COOKIE['login'])) {
     header("Location: index.php");
 }
 
+var_dump($_COOKIE);
 //connect to db and get information based on Session "login" value for user account
 try {
-    $query = DBconfig::getDBConnection()->prepare("SELECT e.name, e.surname, e.image, e.position, e.image_file_name
+    $connection = new DB_config("root", "");
+    $query = $connection->getDBConnection()->prepare("SELECT e.name, e.surname, e.image, e.position, e.image_file_name
     FROM workers e
     LEFT JOIN users a
     ON e.user_id = a.id
@@ -16,15 +18,18 @@ try {
     $query->bindValue(':user_login', $_SESSION['login'], PDO::PARAM_STR);
     $query->execute();
     $sessionUser = $query->fetch(PDO::FETCH_ASSOC);
+    $connection = null;
 } catch (PDOException $e) {
     echo "Error with content: " . $e->getMessage();
 }
 
 //get all posts from DB
 try {
-    $query = DBconfig::getDBConnection()->query("SELECT file_location, description, posted_date, article_id
+    $connection = new DB_config("root", "");
+    $query = $connection->getDBConnection()->query("SELECT file_location, description, posted_date, article_id
     FROM articles ORDER BY posted_date;");
     $postsList = $query->fetchAll(PDO::FETCH_ASSOC);
+    $connection = null;
 } catch (PDOException $e) {
     echo "Error with content: " . $e->getMessage();
 }
@@ -36,7 +41,8 @@ if(isset($_POST['update'])) {
 
             if(file_exists("../files/" . $_FILES['file']['name'])) {
                 try {
-                    $query = DBconfig::getDBConnection()->prepare("UPDATE articles SET
+                    $connection = new DB_config("root", "");
+                    $query = $connection->getDBConnection()->prepare("UPDATE articles SET
                     file_location = ?,
                     description = ?,
                     posted_date = ?
@@ -58,7 +64,8 @@ if(isset($_POST['update'])) {
 
             } elseif (!file_exists("../files/" . $_FILES['file']['name'])){
                 try {
-                    $query = DBconfig::getDBConnection()->prepare("UPDATE articles SET
+                    $connection = new DB_config("root", "");
+                    $query = $connection->getDBConnection()->prepare("UPDATE articles SET
                     file_location = ?,
                     description = ?,
                     posted_date = ?
@@ -69,6 +76,8 @@ if(isset($_POST['update'])) {
                         $_POST['description'],
                         $_POST['posted_date'],
                         $_POST['article_id']));
+
+                    $connection = null;
 
                     move_uploaded_file($_FILES['file']['tmp_name'], "../files/" . $_FILES['file']['name']);
 
@@ -84,7 +93,8 @@ if(isset($_POST['update'])) {
         } elseif (isset($_FILES['file']) && $_FILES['file']['size'] <= 0) {
 
             try {
-                $query = DBconfig::getDBConnection()->prepare("UPDATE articles SET
+                $connection = new DB_config("root", "");
+                $query = $connection->getDBConnection()->prepare("UPDATE articles SET
                     description = ?,
                     posted_date = ?
                     WHERE article_id = ?");
@@ -93,6 +103,8 @@ if(isset($_POST['update'])) {
                     $_POST['description'],
                     $_POST['posted_date'],
                     $_POST['article_id']));
+
+                $connection = null;
 
                 if($result){
                    header( "Location:" . $_SERVER['PHP_SELF'] . "?updated=true&" . "article_id=" . $_POST['article_id']);
@@ -106,14 +118,17 @@ if(isset($_POST['update'])) {
 } elseif (isset($_POST['delete'])) {
 
         try {
-            $getFilePath = DBconfig::getDBConnection()->query("SELECT file_location FROM articles WHERE article_id =" . $_POST['article_id'])->fetch();
+            $connection = new DB_config("root", "");
+            $getFilePath = $connection->getDBConnection()->query("SELECT file_location FROM articles WHERE article_id =" . $_POST['article_id'])->fetch();
 
             //delete file by id
             unlink($getFilePath['file_location']);
 
-            $query = DBconfig::getDBConnection()->prepare("DELETE FROM articles WHERE article_id =:id");
+            $query = $connection->getDBConnection()->prepare("DELETE FROM articles WHERE article_id =:id");
             $query->bindParam(":id", $_POST['article_id'], PDO::PARAM_INT);
             $result = $query->execute();
+
+            $connection = null;
 
             if($result) {
                 header( "Location:" . $_SERVER['PHP_SELF'] . "?updated=false&" . "article_id=" . $_POST['article_id']);
@@ -129,11 +144,13 @@ if(isset($_POST['update'])) {
             if (!file_exists("../files/" . $_FILES['new_post_filepath']['name'])) {
 
                 try {
-                    $query = DBconfig::getDBConnection()->prepare("INSERT INTO articles(file_location, posted_date, description) VALUES (:location, CURDATE(), :description)");
+                    $connection = new DB_config("root", "");
+                    $query = $connection->getDBConnection()->prepare("INSERT INTO articles(file_location, posted_date, description) VALUES (:location, CURDATE(), :description)");
                     $query->bindValue(":description", $_POST['new_post_description'], PDO::PARAM_STR);
                     $query->bindValue(":location", "../files/" . $_FILES['new_post_filepath']['name'], PDO::PARAM_STR);
                     $query->execute();
                     move_uploaded_file($_FILES['new_post_filepath']['tmp_name'], "../files/" . $_FILES['new_post_filepath']['name']);
+                    $connection = null;
                     header("Location:" . $_SERVER['PHP_SELF']);
                 } catch (Exception $e){
                     echo $e->getMessage();
@@ -156,7 +173,8 @@ if(isset($_POST['update'])) {
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
-    <link href="../stylesheet/posts_redaction.css" rel="stylesheet">
+    <link href="../web-inf/stylesheet/posts_redaction.css" rel="stylesheet">
+    <link href="../web-inf/images/favicon.ico" rel="shortcut icon">
 
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
@@ -171,7 +189,7 @@ if(isset($_POST['update'])) {
         <ul>
             <div class="row">
                 <!--logo-->
-                <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
+                <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
                 <!--navigation -->
                 <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
                     <a href="information_page.php">Головна</a>
@@ -192,7 +210,7 @@ if(isset($_POST['update'])) {
                 <li class="col-xl-3  col-lg-3  nav_right">
                     <div class="card">
                         <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                            <img class="card-img-top" src="../images/<?= $sessionUser['image_file_name'];?>" alt="Відсутнє зображення">
+                            <img class="card-img-top" src="../web-inf/images/<?= $sessionUser['image_file_name'];?>" alt="Відсутнє зображення">
                             <div class="text_inside_card">
                                 <p class="card-text"><?php if(isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
                                         <?= $sessionUser['surname'] . " " . $sessionUser['name'];?>
@@ -207,7 +225,7 @@ if(isset($_POST['update'])) {
                         </div>
                         <!--Buttons with logout and edit profile actions-->
                         <a href="edit_profile_page.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
-                        <a href="logout.php" class="btn btn-dark btn-sm">Вийти</a>
+                        <a href="logout_page.php" class="btn btn-dark btn-sm">Вийти</a>
                     </div>
                 </li>
         </ul>
@@ -230,7 +248,7 @@ if(isset($_POST['update'])) {
                         </div>
 
                         <div class="custom-file">
-                            <label class="custom-file-label" for="customFile">Додайте файл (не більше 2мб)</label>
+                            <label class="custom-file-label" for="customFile">Додайте файл (не більше <?= ini_get("upload_max_filesize")?>)</label>
                             <input type="file" class="custom-file-input" id="customFile" name="new_post_filepath">
                         </div>
 
@@ -244,7 +262,7 @@ if(isset($_POST['update'])) {
 
         </div>
 
-        <a id="add_button" href="#"><img src="../images/add.svg"></a>
+        <a id="add_button" href="#" data-toggle="tooltip" data-placement="right" title="Додати новий пост"><img src="../web-inf/images/add.svg"></a>
 
         <?php if(isset($postsList)): ?>
             <?php foreach($postsList as $post): ?>
@@ -299,15 +317,12 @@ if(isset($_POST['update'])) {
                 <?php else: echo "There is no any posts"; ?>
                 <?php endif; ?>
 
-
-
     </div>
 
 </main>
 
-
 <div class="top_button">
-    <a><img src="../images/up-arrow.png"></a>
+    <a><img src="../web-inf/images/up-arrow.png"></a>
 </div>
 
 </body>
@@ -319,67 +334,66 @@ if(isset($_POST['update'])) {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/urljs/1.2.0/url.min.js"></script>
 
 <script>
-    window.onload = function() {
-        $(document).ready(function () {
-            bsCustomFileInput.init();
-        });
+    $(function () {
 
-        if(Url.queryString("fileExist") == "true") {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        bsCustomFileInput.init();
+
+        if (Url.queryString("fileExist") == "true") {
             createShadowAndModalMenuWhenFileExist();
         }
-
 
         const id_value = Url.queryString("article_id");
         let currentElement = $(`#${id_value}_row`);
         let AlertDiv = document.createElement("div");
 
-        if(Url.queryString("updated") == "true") {
+        if (Url.queryString("updated") == "true") {
             addSuccessDiv();
-            }
+        }
 
-        function addSuccessDiv(){
+        function addSuccessDiv() {
             AlertDiv.className = "alert alert-success";
             AlertDiv.role = "alert";
             AlertDiv.innerHTML = "Дані успішно змінено";
-            AlertDiv.style.textAlign= "center";
+            AlertDiv.style.textAlign = "center";
             currentElement.prepend(AlertDiv);
-        };
+        }
 
-        setTimeout(function(){
-            jQuery(".alert").fadeOut("slow", function () {
+        setTimeout(function () {
+            $(".alert").fadeOut("slow", function () {
                 Url.updateSearchParam("updated");
                 Url.updateSearchParam("article_id");
-                Url.updateSearchParam(false);
             });
+
             Url.updateSearchParam("updated");
             Url.updateSearchParam("article_id");
-            Url.updateSearchParam(false);
+
         }, 2000);
 
+    });
         //add button
-        $('#add_button').click(function () {
+        $('#add_button').click(() => {
 
             $('#add_new_post_form').fadeToggle(
                 {
-                duration: "slow",
-                easing: "swing",
-                start: function () {
-                    $('article').fadeToggle("slow");
-                },
-                done: function(){
-                    $(this).css({
-                        "position": "relative",
-                        "top": "150px"
-                    });
+                    duration: "slow",
+                    easing: "swing",
+                    start: () => {
+                        $('article').fadeToggle("slow");
+                        $('#add_new_post_form').css({
+                            "display": "block",
+                            "position": "relative",
+                            "top": "150px"
+                        });
+                    }
                 }
-                }
-                );
+            );
         });
 
-        $('#add_new_post_button').click(function () {
+        $('#add_new_post_button').click(() => {
             $('#add_new_post_form').submit();
         });
-
 
         //top button
         $(window).on("scroll", () => {
@@ -398,7 +412,6 @@ if(isset($_POST['update'])) {
         );
 
 
-    };
 
 
     function createShadowAndModalMenuWhenFileExist(){
@@ -476,5 +489,7 @@ if(isset($_POST['update'])) {
             Url.updateSearchParam("fileExist");
         });
     }
+
+
 </script>
 </html>
