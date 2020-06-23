@@ -24,7 +24,7 @@ class Validation
             "already_exist" => "користувач з таким емейлом вже існує")
     );
 
-    private $inputValue;
+    private $inputLogin;
 
     public $error;
 
@@ -32,7 +32,7 @@ class Validation
 
     public function __construct($input)
     {
-            $this->inputValue = $this::inputValidate($input);
+            $this->inputLogin = $this::inputValidate($input);
     }
 
     static function inputValidate($text) {
@@ -54,36 +54,34 @@ class Validation
     }
 
     function AlreadyExistCheck($comparable_value) : Object {
-        if($this->inputValue == $comparable_value)
+        if($this->inputLogin == $comparable_value)
             $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['already_exist']];
             $this->HasNoErrors();
             return $this;
     }
 
     function EmptyLoginCheck() : Object {
-        if(empty($this->inputValue))
+        if(empty($this->inputLogin))
             $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['empty']];
             $this->HasNoErrors();
             return $this;
     }
 
     function LengthCheck() : Object {
-        if(!empty($this->inputValue))
-            if(mb_strlen(self::inputValidate($this->inputValue), "UTF-8") > 30 || mb_strlen(self::inputValidate($this->inputValue), "UTF-8") < 3)
+        if(!empty($this->inputLogin))
+            if(mb_strlen(self::inputValidate($this->inputLogin), "UTF-8") > 30 || mb_strlen(self::inputValidate($this->inputLogin), "UTF-8") < 3)
                 $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['more_than_thirty_symbols or less_than_three_symbols']];
             $this->HasNoErrors();
             return $this;
     }
- /*
 
-
-//check for correct symbols (only letters and numbers)
-} elseif (!ctype_alnum(inputValidate($_POST['login']))) {
-
-$loginErrors = $errors['login_errors']['incorrect_type_of_chars'];
-
- */
-
+    function CorrectnessOfSymbols(){
+        if(!ctype_alnum(self::inputValidate($this->inputLogin)))
+            $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['incorrect_type_of_chars']];
+            $this->HasNoErrors();
+            return $this;
+    }
+    
 }
 
 

@@ -3,7 +3,6 @@ require_once("../src/db_files/DB_config.php");
 require_once("../src/services/Validation.php");
 
 
-
 if(isset($_POST['reg_button'])) {
 
      //get data from db and check for repeat
@@ -27,6 +26,8 @@ if(isset($_POST['reg_button'])) {
 
              $validation->LengthCheck();
 
+             $validation->CorrectnessOfSymbols();
+
              print_r($validation);
 
              $connection = null;
@@ -36,31 +37,7 @@ if(isset($_POST['reg_button'])) {
          die($e->getMessage());
      }
 
-
-     /*
-      * verify login input
-      * check for non empty
-     */
-
-
-
 /*
-         //check for length no more than 30 symbols
-     } elseif (inputValidate(mb_strlen($_POST['login'], "UTF-8")) > 30) {
-
-         $loginErrors = $errors['login_errors']['more_than_thirty_symbols'];
-
-         //check for length (less than 3 symbols)
-     } elseif (inputValidate(mb_strlen($_POST['login'], "UTF-8")) < 3) {
-
-         $loginErrors = $errors['login_errors']['less_than_three_symbols'];
-
-         //check for correct symbols (only letters and numbers)
-     } elseif (!ctype_alnum(inputValidate($_POST['login']))) {
-
-         $loginErrors = $errors['login_errors']['incorrect_type_of_chars'];
-
-     };
 
      //verify password input
 
