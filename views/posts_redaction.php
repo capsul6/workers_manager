@@ -6,7 +6,6 @@ if(empty($_SESSION['login']) && empty($_COOKIE['login'])) {
     header("Location: index.php");
 }
 
-var_dump($_COOKIE);
 //connect to db and get information based on Session "login" value for user account
 try {
     $connection = new DB_config("root", "");
@@ -27,7 +26,7 @@ try {
 try {
     $connection = new DB_config("root", "");
     $query = $connection->getDBConnection()->query("SELECT file_location, description, posted_date, article_id
-    FROM articles ORDER BY posted_date;");
+    FROM articles ORDER BY posted_date DESC");
     $postsList = $query->fetchAll(PDO::FETCH_ASSOC);
     $connection = null;
 } catch (PDOException $e) {

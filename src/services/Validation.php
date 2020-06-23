@@ -6,10 +6,10 @@ class Validation
 
   const ERROR_TYPES = array("login_errors" =>
   array("empty" => "логін не може бути пустим",
-        "more_than_thirty_symbols" => "логін не може бути довше 30 символів",
-        "less_than_three_symbols" => "логін не може бути коротшим за 3 символи",
-        "incorrect_type_of_chars" => "логін повинен складатися з букв та/або цифр",
-        "already_exist" => "користувач з таким логіном вже існує"),
+        "already_exist" => "користувач з таким логіном вже існує",
+        "more_than_thirty_symbols or less_than_three_symbols" => "логін не може бути довшим 30 символів та коротшим 3",
+        "incorrect_type_of_chars" => "логін повинен складатися з букв та/або цифр"),
+
 
         "password_errors" => array("empty" => "пароль не може бути пустим",
             "less_than_three_symbols" => "пароль не може бути коротшим за 3 символи",
@@ -67,5 +67,23 @@ class Validation
             return $this;
     }
 
+    function LengthCheck() : Object {
+        if(!empty($this->inputValue))
+            if(mb_strlen(self::inputValidate($this->inputValue), "UTF-8") > 30 || mb_strlen(self::inputValidate($this->inputValue), "UTF-8") < 3)
+                $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['more_than_thirty_symbols or less_than_three_symbols']];
+            $this->HasNoErrors();
+            return $this;
+    }
+ /*
+
+
+//check for correct symbols (only letters and numbers)
+} elseif (!ctype_alnum(inputValidate($_POST['login']))) {
+
+$loginErrors = $errors['login_errors']['incorrect_type_of_chars'];
+
+ */
 
 }
+
+

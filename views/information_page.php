@@ -64,7 +64,7 @@ if(empty($_GET['page'])) {
     try {
         $connection = new DB_config("root", "");
         $listOfPostsDependOnPage = $connection->getDBConnection()->query(
-            "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
+            "SELECT file_location, description, posted_date FROM articles WHERE posted_date > '2018-01-01' ORDER BY posted_date DESC LIMIT 20")->fetchAll(PDO::FETCH_ASSOC);
         $connection = null;
     } catch (Exception $e){
         echo "Error with content: " . $e->getMessage();
