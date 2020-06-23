@@ -1,54 +1,35 @@
 <?php
- require_once("../db_files/DB_config.php");
+require_once("../src/db_files/DB_config.php");
+require_once("../src/services/Validation.php");
 
- function inputValidate($text) {
-     $text = trim($text);
-     $text = substr($text,0,29);
-     $text = stripslashes($text);
-     return $text;
- }
 
- $loginErrors = $passwordErrors = $emailErrors = $repeatPasswordErrors = "";
 
- $errors = array("login_errors" => array("empty" => "логін не може бути пустим",
-                                         "more_than_thirty_symbols" => "логін не може бути довше 30 символів",
-                                         "less_than_three_symbols" => "логін не може бути коротшим за 3 символи",
-                                         "incorrect_type_of_chars" => "логін повинен складатися з букв та/або цифр",
-                                         "already_exist" => "користувач з таким логіном вже існує"),
-
-                 "password_errors" => array("empty" => "пароль не може бути пустим",
-                                            "less_than_three_symbols" => "пароль не може бути коротшим за 3 символи",
-                                            "more_than_thirty_symbols" => "пароль не може бути довше 30 символів",
-                                            "incorrect_type_of_chars" => "пароль повинен складатися з букв та/або цифр"),
-
-                 "password_verify_errors" => array("empty" => "повторний пароль не може бути пустим",
-                                                   "don`t_found" => "повторний пароль не співпадає з основним"),
-
-                 "email_errors" => array("empty" => "емейл не може бути пустим",
-                                         "don`t_contain_symbol" => "це не схоже на емейл адресу",
-                                         "already_exist" => "користувач з таким емейлом вже існує")
- );
-
- if(isset($_POST['reg_button'])) {
+if(isset($_POST['reg_button'])) {
 
      //get data from db and check for repeat
      try{
 
-         if(!empty($_POST['login'])) {
+             $validation = new Validation($_POST['login']);
 
-             $get_login = DBconfig::getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
+             $connection = new DB_config("root", "");
 
-             $get_login->bindValue(":login", inputValidate($_POST['login']), PDO::PARAM_STR);
+             $get_login = $connection->getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
+
+             $get_login->bindValue(":login", Validation::inputValidate($_POST['login']), PDO::PARAM_STR);
 
              $get_login->execute();
 
-             $row = $get_login->fetch(PDO::FETCH_ASSOC);
+             $loginFromDbByInsertedCondition = $get_login->fetch(PDO::FETCH_ASSOC);
 
-                 if (inputValidate($_POST['login']) == $row['login']) {
-                     $loginErrors = $errors['login_errors']['already_exist'];
-                 }
+             $validation->AlreadyExistCheck($loginFromDbByInsertedCondition['login']);
 
-         }
+             $validation->EmptyLoginCheck();
+
+             print_r($validation);
+
+             $connection = null;
+
+
      } catch (PDOException $e) {
          die($e->getMessage());
      }
@@ -58,10 +39,10 @@
       * verify login input
       * check for non empty
      */
-     if (inputValidate(empty($_POST['login']))) {
 
-         $loginErrors = $errors['login_errors']['empty'];
 
+
+/*
          //check for length no more than 30 symbols
      } elseif (inputValidate(mb_strlen($_POST['login'], "UTF-8")) > 30) {
 
@@ -130,7 +111,9 @@
      if(isset($_POST['email'])) {
 
          try {
-             $query = DBconfig::getDBConnection()->prepare("SELECT email FROM users WHERE email = :email_from_form;");
+
+             $connection = new DB_config("root", "");
+             $query = $connection->getDBConnection()->prepare("SELECT email FROM users WHERE email = :email_from_form;");
 
              $query->bindValue(":email_from_form", $emailFromForm, PDO::PARAM_STR);
 
@@ -143,6 +126,8 @@
                      }
                  }
              }
+
+             $connection = null;
 
          } catch (PDOException $e) {
              die($e->getMessage());
@@ -158,7 +143,9 @@
 
         try{
 
-        $insert_data = DBconfig::getDBConnection()->prepare("INSERT INTO users(login,password,email) VALUES (:login, :password, :email);");
+        $connection = new DB_config("root", "");
+
+        $insert_data = $connection->getDBConnection()->prepare("INSERT INTO users(login,password,email) VALUES (:login, :password, :email)");
 
         $insert_data->bindParam(":login", $login, PDO::PARAM_STR);
         $insert_data->bindParam(":password", $password, PDO::PARAM_STR);
@@ -166,13 +153,17 @@
 
         $result = $insert_data->execute();
 
+        $connection = null;
+
         if($result) {
             header('Location: index.php');
         }
 
     } catch (PDOException $e) {
             die($e->getMessage());
-        }}
+        }
+
+*/
  }
 
 
@@ -213,19 +204,19 @@
     <form method="post" action="<?php $_SERVER['PHP_SELF']?>" class="mx-auto">
         <div class="form-group">
             <label for="login">Логін</label>
-            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" required><div class="text-warning input_warnings"><?php echo $loginErrors;?></div>
+            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" ><div class="text-warning input_warnings"><?php if(!empty($validation)) echo $validation->error['login_errors']?></div>
         </div>
         <div class="form-group">
             <label for="password">Пароль</label>
-            <input type="password" class="form-control" id="password" placeholder="Пароль" name="password" maxlength="30" minlength="3" required><div class="text-warning input_warnings"><?php echo $passwordErrors;?></div>
+            <input type="password" class="form-control" id="password" placeholder="Пароль" name="password" maxlength="30" minlength="3" ><div class="text-warning input_warnings"></div>
         </div>
         <div class="form-group">
             <label for="password_verify">Пароль ще раз</label>
-            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30" required><div class="text-warning input_warnings"><?php echo $repeatPasswordErrors;?></div>
+            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30" ><div class="text-warning input_warnings"></div>
         </div>
             <div class="form-group">
             <label for="email">Емейл (Якщо забудете пароль, ми надішлемо його на цю адресу)</label>
-            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>" required><div class="text-warning input_warnings"><?php echo $emailErrors;?></div>
+            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>" ><div class="text-warning input_warnings"></div>
             </div>
         <button id="registration_button" type="submit" class="btn btn-outline-success" name="reg_button" data-toggle="tooltip" data-placement="right" title="Натисніть, щоб зареєструватися">Зареєструватися</button>
     </form>

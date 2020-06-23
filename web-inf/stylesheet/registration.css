@@ -2,10 +2,8 @@ header {
     position: absolute;
     top: 0;
     left: 0;
-}
-
-nav {
-    padding-top: 15px;
+    margin-top: 16px;
+    padding-left: 55px!important;
 }
 
 .login_menu {
