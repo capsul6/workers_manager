@@ -39,6 +39,7 @@ class Validation
      $text = trim($text);
      $text = substr($text,0,29);
      $text = stripslashes($text);
+     $text = htmlspecialchars($text);
      return $text;
     }
 
@@ -69,19 +70,19 @@ class Validation
 
     function LengthCheck() : Object {
         if(!empty($this->inputLogin))
-            if(mb_strlen(self::inputValidate($this->inputLogin), "UTF-8") > 30 || mb_strlen(self::inputValidate($this->inputLogin), "UTF-8") < 3)
+            if(mb_strlen($this->inputLogin, "UTF-8") > 30 || mb_strlen($this->inputLogin, "UTF-8") < 3)
                 $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['more_than_thirty_symbols or less_than_three_symbols']];
             $this->HasNoErrors();
             return $this;
     }
 
     function CorrectnessOfSymbols(){
-        if(!ctype_alnum(self::inputValidate($this->inputLogin)))
+        if(!ctype_alnum($this->inputLogin))
             $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['incorrect_type_of_chars']];
             $this->HasNoErrors();
             return $this;
     }
-    
+
 }
 
 
