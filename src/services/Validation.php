@@ -55,32 +55,41 @@ class Validation
     }
 
     function AlreadyExistCheck($comparable_value) : Object {
-        if($this->inputLogin == $comparable_value)
+        if($this->inputLogin == $comparable_value && $comparable_value != null)
             $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['already_exist']];
             $this->HasNoErrors();
             return $this;
     }
 
     function EmptyLoginCheck() : Object {
-        if(empty($this->inputLogin))
+        if(empty($this->inputLogin) && $this->HasNoErrors()) {
             $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['empty']];
             $this->HasNoErrors();
             return $this;
+        } else {
+            return $this;
+        }
     }
 
     function LengthCheck() : Object {
-        if(!empty($this->inputLogin))
-            if(mb_strlen($this->inputLogin, "UTF-8") > 30 || mb_strlen($this->inputLogin, "UTF-8") < 3)
+        if(!empty($this->inputLogin) && $this->HasNoErrors()) {
+            if (mb_strlen($this->inputLogin, "UTF-8") > 30 || mb_strlen($this->inputLogin, "UTF-8") < 3)
                 $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['more_than_thirty_symbols or less_than_three_symbols']];
             $this->HasNoErrors();
             return $this;
+        } else {
+            return $this;
+        }
     }
 
     function CorrectnessOfSymbols(){
-        if(!ctype_alnum($this->inputLogin))
+        if(!ctype_alnum($this->inputLogin) && $this->HasNoErrors()) {
             $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['incorrect_type_of_chars']];
             $this->HasNoErrors();
             return $this;
+        } else {
+            return $this;
+        }
     }
 
 }
