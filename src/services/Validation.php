@@ -24,11 +24,11 @@ class Validation
             "already_exist" => "користувач з таким емейлом вже існує")
     );
 
-    private $inputLogin;
+    private $inputLogin = null;
 
-    public $error;
+    public $error = null;
 
-    public $state = "success";
+    public $state = null;
 
     public function __construct($input)
     {

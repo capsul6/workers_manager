@@ -183,7 +183,7 @@ if(isset($_POST['reg_button'])) {
     <form method="post" action="<?php $_SERVER['PHP_SELF']?>" class="mx-auto">
         <div class="form-group">
             <label for="login">Логін</label>
-            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" /*minlength="3" maxlength="30" required*/ value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" ><div class="text-warning input_warnings"><?php if(($validation->error)) echo $validation->error['login_errors']?></div>
+            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" /*minlength="3" maxlength="30" required*/ value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" ><div class="text-warning input_warnings"><?php if(isset($validation)) echo $validation->error['login_errors']?></div>
         </div>
         <div class="form-group">
             <label for="password">Пароль</label>
@@ -206,14 +206,11 @@ if(isset($_POST['reg_button'])) {
 
 <script>
     window.onload = function () {
-
        let a = $(window).height();
        $("body").css("height", a);
-
         $(function () {
             $('[data-toggle="tooltip"]').tooltip()
         });
-
     };
 </script>
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
