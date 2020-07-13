@@ -188,7 +188,7 @@ if(isset($_POST['update'])) {
         <ul>
             <div class="row">
                 <!--logo-->
-                <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
+                <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../web-inf/images/policeLogo.jpg" alt="logo"/></a></li>
                 <!--navigation -->
                 <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
                     <a href="information_page.php">Головна</a>

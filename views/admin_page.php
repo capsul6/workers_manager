@@ -8,10 +8,11 @@ if(empty($_SESSION['login']) && empty($_COOKIE['login'])) {
     header("Location: index.php");
 }
 
+
 //connect to db and get information based on Session "login" value for user account
 try {
     $connection = new DB_config("root", "");
-    $query = $connection->getDBConnection()->prepare("SELECT e.name, e.surname, e.image, e.position, e.image_file_name
+    $query = $connection->getDBConnection()->prepare("SELECT e.name, e.surname, e.image, e.position, e.image_file_name, e.permission_type
     FROM workers e
     LEFT JOIN users a
     ON e.user_id = a.id
@@ -23,6 +24,7 @@ try {
     } catch (PDOException $e) {
        echo "Error with content: " . $e->getMessage();
     }
+
 
 //select all users those are presented in DB for user_list
 try {
@@ -83,45 +85,7 @@ if(isset($_GET['user_id'])) {
 
 <body>
 
-<header class="container-fluid">
-    <nav>
-        <ul>
-            <div class="row">
-            <!--logo-->
-            <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-            <!--navigation -->
-            <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
-                <a href="information_page.php">Головна</a>
-                <a href="admin_page.php">Інформація про працівників</a>
-                <a href="edit_profile_page.php">Редагування та внесення данних</a>
-            </li>
-
-            <!--Photo and information-->
-            <li class="col-xl-3  col-lg-3  nav_right">
-                <div class="card">
-                    <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                    <img class="card-img-top" src="../web-inf/images/<?= $sessionUser['image_file_name']; ?>" alt="Відсутнє зображення">
-                     <div class="text_inside_card">
-                         <p class="card-text"><?php if(isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
-                                                <?= $sessionUser['surname'] . " " . $sessionUser['name']; ?>
-                                                <?php else: echo "Не вказані дані";?>
-                                                <?php endif; ?>
-                         </p>
-                         <p class="card-text"><?php if(isset($sessionUser['position'])):?>
-                                                 <?= $sessionUser['position'];?>
-                                                 <?php else: echo "Не вказані дані";?>
-                                                 <?php endif;?>
-                         </p>
-                     </div>
-                    </div>
-                        <!--Buttons with logout and edit profile actions-->
-                        <a href="edit_profile_page.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
-                        <a href="logout_page.php" class="btn btn-dark btn-sm">Вийти</a>
-                 </div>
-             </li>
-        </ul>
-    </nav>
-</header>
+<?php include_once "navigation_panel/header.php";?>
 
 <div class="container main_block">
 
@@ -227,14 +191,14 @@ if(isset($_GET['user_id'])) {
             <tbody>
             <tr id="status">
                     <?php
-                    if(isset($outsideSchedule)) {
+                    if(!empty($outsideSchedule)) {
                         if($outsideSchedule[0]['date_come'] <= date('Y-m-d') && date('Y-m-d') >= $outsideSchedule[0]['date_return']) {
                             echo "<td width=\"100%\" id=\"colorful_row\">На робочому місці</td>";
                         } else {
                             echo "<td width=\"100%\" id=\"colorful_row\">Відсутній на робочому місті</td>";
                         }
-                    } else {
-                        echo "<td></td>";
+                    } elseif(isset($outsideSchedule)) {
+                        echo "<td>Неможливо визначити статус, так як відсутня інформація про відсутність та/або присутність</td>";
                     }?>
             </tr>
             </tbody>
@@ -250,7 +214,7 @@ if(isset($_GET['user_id'])) {
             <tbody>
             <tr class="table-warning">
                 <td>
-                    <?php if(isset($outsideSchedule)):?>
+                    <?php if(!empty($outsideSchedule) && isset($outsideSchedule)):?>
                     <?php foreach ($outsideSchedule as $dates): ?>
                     <ul>
                         <li><?= $dates['outside_type'];?> з <span id="resultFrom"><?= $dates['date_come'];?></span> по <span id="resultTo"><?= $dates['date_return'];?></span></li>

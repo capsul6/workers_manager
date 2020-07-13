@@ -26,13 +26,22 @@ class Validation
 
     private $inputLogin = null;
 
-    public $error = null;
+    private $inputPassword = null;
+
+    private $inputPasswordVerify = null;
+
+    private $inputEmail = null;
+
+    public array $errors = array("login_errors" => null, "password_errors" => null, "password_verify_errors" => null, "email_errors" => null);
 
     public $state = null;
 
-    public function __construct($input)
+    public function __construct($loginFromView, $passwordFromView, $passwordVerifyFromView, $emailFromView)
     {
-            $this->inputLogin = $this::inputValidate($input);
+            $this->inputLogin = self::inputValidate($loginFromView);
+            $this->inputPassword = self::inputValidate($passwordFromView);
+            $this->inputPasswordVerify = self::inputValidate($passwordVerifyFromView);
+            $this->inputEmail = self::inputValidate($emailFromView);
     }
 
     static function inputValidate($text) {
@@ -43,39 +52,44 @@ class Validation
      return $text;
     }
 
-    function HasNoErrors(){
-        if(empty($this->error)){
-            $this->state == "success";
+    function HasErrors($typeOfError){
+        if(isset($this->errors["${typeOfError}"])){
             return true;
         } else {
-            $this->state = "fail";
             return false;
         }
-
     }
 
     function AlreadyExistCheck($comparable_value) : Object {
         if($this->inputLogin == $comparable_value && $comparable_value != null)
-            $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['already_exist']];
-            $this->HasNoErrors();
+            $this->errors = ["login_errors" => self::ERROR_TYPES['login_errors']['already_exist']];
+            $this->HasErrors();
             return $this;
     }
 
-    function EmptyLoginCheck() : Object {
-        if(empty($this->inputLogin) && $this->HasNoErrors()) {
-            $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['empty']];
-            $this->HasNoErrors();
-            return $this;
-        } else {
-            return $this;
-        }
+    function EmptyLoginCheck() : void {
+        if(empty($this->inputLogin) && !$this->HasErrors("login_errors"))
+            $this->errors["login_errors"] = self::ERROR_TYPES["login_errors"]["empty"];
+            $this->setState("fail");
+
+        if(empty($this->inputPassword) && !$this->HasErrors("password_errors"))
+            $this->errors["password_errors"] = self::ERROR_TYPES["password_errors"]["empty"];
+            $this->setState("fail");
+
+        if(empty($this->inputPasswordVerify) && !$this->HasErrors("password_verify_errors"))
+            $this->errors["password_verify_errors"] = self::ERROR_TYPES["password_verify_errors"]["empty"];
+            $this->setState("fail");
+
+        if(empty($this->inputEmail) && !$this->HasErrors("email_errors"))
+            $this->errors["email_errors"] = self::ERROR_TYPES["email_errors"]["empty"];
+            $this->setState("fail");
     }
 
-    function LengthCheck() : Object {
-        if(!empty($this->inputLogin) && $this->HasNoErrors()) {
-            if (mb_strlen($this->inputLogin, "UTF-8") > 30 || mb_strlen($this->inputLogin, "UTF-8") < 3)
-                $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['more_than_thirty_symbols or less_than_three_symbols']];
-            $this->HasNoErrors();
+    function LengthCheck($min_length, $max_length) : Object {
+        if(!empty($this->inputLogin) && $this->HasErrors()) {
+            if (mb_strlen($this->inputLogin, "UTF-8") > $max_length || mb_strlen($this->inputLogin, "UTF-8") < $min_length)
+                $this->errors = ["login_errors" => self::ERROR_TYPES['login_errors']['more_than_thirty_symbols or less_than_three_symbols']];
+            $this->HasErrors();
             return $this;
         } else {
             return $this;
@@ -83,14 +97,24 @@ class Validation
     }
 
     function CorrectnessOfSymbols(){
-        if(!ctype_alnum($this->inputLogin) && $this->HasNoErrors()) {
-            $this->error = ["login_errors" => self::ERROR_TYPES['login_errors']['incorrect_type_of_chars']];
-            $this->HasNoErrors();
+        if(!ctype_alnum($this->inputLogin) && $this->HasErrors()) {
+            $this->errors = ["login_errors" => self::ERROR_TYPES['login_errors']['incorrect_type_of_chars']];
+            $this->HasErrors();
             return $this;
         } else {
             return $this;
         }
     }
+
+
+    /**
+     * @param null $state
+     */
+    public function setState($state): void
+    {
+        $this->state = $state;
+    }
+
 
 }
 

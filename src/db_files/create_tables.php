@@ -52,7 +52,17 @@ CREATE TABLE articles(
 article_id INT(30) NOT NULL AUTO_INCREMENT PRIMARY KEY,
 file_location VARCHAR(50) DEFAULT NULL,
 posted_date DATE,
-description VARCHAR(255) 
+description VARCHAR(255),
+list_of_acquainted INT(30),
+CONSTRAINT 'list_of_acquainted' FOREIGN KEY (list_of_acquainted) REFERENCES list_of_acquainted(list_of_acquainted_id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE list_of_acquainted(
+list_of_acquainted_id INT(30) NOT NULL AUTO_INCREMENT PRIMARY KEY,
+article_id INT(30) NOT NULL,
+user_name VARCHAR(255) NOT NULL,
+date_of_acquainted DATE,
+CONSTRAINT 'article_id' FOREIGN KEY (article_id) REFERENCES articles(list_of_acquainted) ON UPDATE CASCADE ON DELETE CASCADE
 );
 ";
 ?>

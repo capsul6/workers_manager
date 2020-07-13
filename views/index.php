@@ -6,7 +6,7 @@ spl_autoload_register(function ($name){
 
 session_start();
 
-if(isset($_COOKIE['login']) or isset($_SESSION['login'])) {
+if(isset($_COOKIE['login']) || isset($_SESSION['login'])) {
     header('Location: admin_page.php');
 }
 
@@ -146,7 +146,7 @@ if(isset($_POST['login_button'])) {
 <header class="container-fluid">
     <nav>
     <a href="index.php">
-        <img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/>
+        <img src="../web-inf/images/policeLogo.jpg" alt="logo"/>
     </a>
     </nav>
 </header>

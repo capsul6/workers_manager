@@ -19,7 +19,7 @@
 <header class="container-fluid">
         <nav>
         <a href="index.php">
-            <img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/>
+            <img src="../web-inf/images/policeLogo.jpg" alt="logo"/>
         </a>
         </nav>
 </header>

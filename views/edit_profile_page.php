@@ -92,7 +92,7 @@ require_once('../src/db_files/DB_config.php');
                                                 $_FILES['file']['name'], $sessionUser['user_id']));
 
                 //save file in specific directory
-                $filesDirectory = __DIR__ . "../images/" . $_FILES['file']['name'];
+                $filesDirectory = __DIR__ . "../web-inf/images" . $_FILES['file']['name'];
                 move_uploaded_file($_FILES['file']['tmp_name'], $filesDirectory);
                 $connection = null;
 
@@ -105,7 +105,7 @@ require_once('../src/db_files/DB_config.php');
 
 
 
-         //update data in DB if user had click on the button and new image was not inserted
+         //update data in DB if user clicked on the button and new image was not inserted
         } elseif (isset($_POST['button_success']) && $_FILES['file']['size'] <= 0) {
 
             try{
@@ -117,10 +117,19 @@ require_once('../src/db_files/DB_config.php');
                      tellNumber = ?,
                      surname = ?,
                      name = ?
-                     WHERE user_id = ?");
+                     WHERE 
+                     user_id = ?");
 
-                $forUpdateWorkerValues->execute(array($_POST['position'], $_POST['dateOfBirth'], $_POST['rank'],
-                $_POST['tellNumber'], $_POST['surname'], $_POST['name'], $sessionUser['user_id']));
+                $forUpdateWorkerValues->execute(
+                array(
+                $_POST['position'],
+                $_POST['dateOfBirth'],
+                $_POST['rank'],
+                $_POST['tellNumber'],
+                $_POST['surname'],
+                $_POST['name'],
+                $sessionUser['user_id'])
+                );
 
                 $connection = null;
 
@@ -222,57 +231,7 @@ require_once('../src/db_files/DB_config.php');
 
         <body>
 
-        <header class="container-fluid">
-            <nav>
-                <ul>
-                    <div class="row">
-                        <!--logo-->
-                        <li class="col-xl-3 col-lg-3 nav_left"><a href="index.php"><img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/></a></li>
-                        <!--navigation -->
-                        <li class="col-xl-6 col-lg-6 d-flex justify-content-center align-items-center nav_center">
-                            <a href="information_page.php">Головна</a>
-                            <a
-                                <?php
-                                if(isset($_SESSION['login']) && $_SESSION['login'] == "capsul6" || isset($_COOKIE['login']) && $_COOKIE['login'] == "capsul6") {
-                                    echo "href='admin_page.php'";
-                                }
-                                else {
-                                    echo "aria-disabled=\"true\"";
-                                }
-                                ?>>Сторінка адміністратора</a>
-                            <a href="edit_profile_page.php">Редагування та внесення данних</a>
-                        </li>
-
-                        <!--Photo and information-->
-                        <li class="col-xl-3  col-lg-3  nav_right">
-                            <div class="card">
-                                <div class="card-body d-flex flex-row justify-content-between align-items-center">
-                                    <img class="card-img-top" src="../web-inf/images/<?= $sessionUser['image_file_name']?>" alt="Відсутнє зображення">
-                                    <div class="text_inside_card text-center">
-                                        <p class="card-text">
-                                            <?php if (isset($sessionUser['surname']) && isset($sessionUser['name'])):?>
-                                            <?= $sessionUser['surname'] . " " . $sessionUser['name'];?>
-                                            <?php else:
-                                                echo "Не вказані дані";
-                                            ?>
-                                            <?php endif;?></p>
-                                        <p class="card-text"><?php if(isset($sessionUser['position'])):?>
-                                                <?= $sessionUser['position'];?>
-                                            <?php else:
-                                                echo "Не вказані дані";
-                                            ?>
-                                            <?php endif;?>
-                                        </p>
-                                    </div>
-                                </div>
-                                <!--Buttons with logout and edit profile actions-->
-                                <a href="edit_profile_page.php" class="btn btn-primary btn-sm">Редагувати профіль</a>
-                                <a href="logout_page.php" class="btn btn-dark btn-sm">Вийти</a>
-                            </div>
-                        </li>
-                </ul>
-            </nav>
-        </header>
+        <?php include_once "navigation_panel/header.php";?>
 
         <div class="container main_block">
 
@@ -369,33 +328,33 @@ require_once('../src/db_files/DB_config.php');
 
                     <tbody>
 
-                    <form method="get" action="<?php $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_update" id="form_for_dateCome_dateReturn_update">
+                    <form method="GET" action="<?php $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_update" id="form_for_dateCome_dateReturn_update">
 
-                    <?php if(isset($queryForDateComeDateReturnCurrentUserResult)){
-                        foreach($queryForDateComeDateReturnCurrentUserResult as $thisValues):?>
+                    <?php if(isset($queryForDateComeDateReturnCurrentUserResult)): ?>
+                        <?php foreach($queryForDateComeDateReturnCurrentUserResult as $concreteDataComeDateReturn): ?>
                         <tr>
-                            <input type="hidden" value="<?= $thisValues['outside_id'] ?>" name="outside_id">
+                            <input type="hidden" value="<?= $concreteDataComeDateReturn['outside_id'] ?>" name="outside_id">
                             <td>
                                 <select class="custom-select" name="current_outside_type_update" id="current_outside_type_update">
-                                    <option value="<?= $thisValues['outside_type']?>" disabled selected><?= $thisValues['outside_type']?></option>
+                                    <option value="<?= $concreteDataComeDateReturn['outside_type']?>" disabled selected><?= $concreteDataComeDateReturn['outside_type']?></option>
                                     <option value="відпустка">відпустка</option>
                                     <option value="відрядження">відрядження</option>
                                     <option value="лікарняний">лікарняний</option>
                                 </select>
                             </td>
-                            <td><input type="date" class="form-control"  name="current_date_come_update" value="<?php echo $thisValues['date_come']?>"></td>
-                            <td><input type="date" class="form-control"  name="current_date_return_update" value="<?php echo $thisValues['date_return']?>"></td>
+                            <td><input type="date" class="form-control"  name="current_date_come_update" value="<?php echo $concreteDataComeDateReturn['date_come']?>"></td>
+                            <td><input type="date" class="form-control"  name="current_date_return_update" value="<?php echo $concreteDataComeDateReturn['date_return']?>"></td>
                             <td class="text-center">
                                 <button type="submit" class="btn btn-warning update" name="update_outside_activity">Оновити</button>
                                 <button type="submit" class="btn btn-danger delete" name="delete_outside_activity">Видалити</button>
                             </td>
                         </tr>
-                        <?php endforeach;
-                        }?>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
 
                     </form>
 
-                    <form method="get" action="<?= $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_add">
+                    <form method="GET" action="<?= $_SERVER['PHP_SELF']?>" name="form_for_dateCome_dateReturn_add">
 
                         <tr>
                             <td><select type="text" class="form-control custom-select" name="add_new_type_of_outside_activity" required>

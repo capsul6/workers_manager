@@ -8,25 +8,20 @@ if(isset($_POST['reg_button'])) {
      //get data from db and check for repeat
      try{
 
-             $validation = new Validation($_POST['login']);
+             $validation = new Validation($_POST['login'], $_POST['password'], $_POST['password_verify'], $_POST['email']);
 
              $connection = new DB_config("root", "");
 
-             $get_login = $connection->getDBConnection()->prepare("SELECT login FROM users WHERE login = :login");
+             $get_login = $connection->getDBConnection()->prepare("SELECT login, email FROM users WHERE login = :login");
 
              $get_login->bindValue(":login", Validation::inputValidate($_POST['login']), PDO::PARAM_STR);
 
              $get_login->execute();
 
-             $loginFromDbByInsertedCondition = $get_login->fetch(PDO::FETCH_ASSOC);
+             $loginAndEmailFromDbByInsertedCondition = $get_login->fetch(PDO::FETCH_ASSOC);
 
              $validation->EmptyLoginCheck();
 
-             $validation->AlreadyExistCheck($loginFromDbByInsertedCondition['login']);
-
-             $validation->LengthCheck();
-
-             $validation->CorrectnessOfSymbols();
 
              print_r($validation);
 
@@ -39,24 +34,6 @@ if(isset($_POST['reg_button'])) {
 
 /*
 
-     //verify password input
-
-     // check for non empty
-     if (inputValidate($_POST['password'] == '')){
-
-         $passwordErrors = $errors['password_errors']['empty'];
-
-         //check for length
-     } elseif
-     (inputValidate(mb_strlen($_POST['password'], "UTF-8")) > 30){
-
-         $passwordErrors = $errors['password_errors']['more_than_thirty_symbols'];
-
-         //check for length (less than 3 symbols)
-     } elseif
-     (inputValidate(mb_strlen($_POST['password'], "UTF-8")) < 3){
-
-         $passwordErrors = $errors['password_errors']['less_than_three_symbols'];
 
          //check for correct symbols (only letters and numbers)
      } elseif
@@ -168,7 +145,7 @@ if(isset($_POST['reg_button'])) {
 <header class="container-fluid">
     <nav>
         <a href="index.php">
-            <img src="../web-inf/images/Webp.net-resizeimage.jpg" alt="logo"/>
+            <img src="../web-inf/images/policeLogo.jpg" alt="logo"/>
         </a>
     </nav>
 </header>
@@ -183,7 +160,7 @@ if(isset($_POST['reg_button'])) {
     <form method="post" action="<?php $_SERVER['PHP_SELF']?>" class="mx-auto">
         <div class="form-group">
             <label for="login">Логін</label>
-            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" /*minlength="3" maxlength="30" required*/ value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" ><div class="text-warning input_warnings"><?php if(isset($validation)) echo $validation->error['login_errors']?></div>
+            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" /*minlength="3" maxlength="30" required*/ value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" ><div class="text-warning input_warnings"><?php if(isset($validation))  echo $validation->error['login_errors']?></div>
         </div>
         <div class="form-group">
             <label for="password">Пароль</label>
