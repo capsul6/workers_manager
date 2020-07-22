@@ -32,7 +32,7 @@ class Validation
 
     private $inputEmail = null;
 
-    public array $errors = array("login_errors" => null, "password_errors" => null, "password_verify_errors" => null, "email_errors" => null);
+    public $errors = null;
 
     public $state = null;
 
@@ -67,7 +67,7 @@ class Validation
             return $this;
     }
 
-    function EmptyLoginCheck() : void {
+    function EmptyCheck() : void {
         if(empty($this->inputLogin) && !$this->HasErrors("login_errors"))
             $this->errors["login_errors"] = self::ERROR_TYPES["login_errors"]["empty"];
             $this->setState("fail");
@@ -113,6 +113,14 @@ class Validation
     public function setState($state): void
     {
         $this->state = $state;
+    }
+
+    /**
+     * @return array
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
     }
 
 

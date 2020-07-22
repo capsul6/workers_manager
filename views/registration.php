@@ -20,8 +20,7 @@ if(isset($_POST['reg_button'])) {
 
              $loginAndEmailFromDbByInsertedCondition = $get_login->fetch(PDO::FETCH_ASSOC);
 
-             $validation->EmptyLoginCheck();
-
+             $validation->EmptyCheck();
 
              print_r($validation);
 
@@ -36,9 +35,8 @@ if(isset($_POST['reg_button'])) {
 
 
          //check for correct symbols (only letters and numbers)
-     } elseif
-     (!preg_match("/[a-zA-ZА-ЯЁа-яё0-9]/u", inputValidate($_POST['password']))){
 
+     (!preg_match("/[a-zA-ZА-ЯЁа-яё0-9]/u", inputValidate($_POST['password']))){
          $passwordErrors = $errors['password_errors']['incorrect_type_of_chars'];
      };
 
@@ -52,43 +50,12 @@ if(isset($_POST['reg_button'])) {
      };
 
 
-      //check email for non empty
-     if (inputValidate($_POST['email']) == "") {
-         $emailErrors = $errors['email_errors']['empty'];
          //check for correct symbols in email input
      } elseif (!filter_var(inputValidate($_POST['email']), FILTER_VALIDATE_EMAIL)) {
          $emailErrors = $errors['email_errors']['don`t_contain_symbol'];
      }
 
 
-     $emailFromForm = inputValidate($_POST['email']);
-
-     //get data from db for "already exist" error check
-     if(isset($_POST['email'])) {
-
-         try {
-
-             $connection = new DB_config("root", "");
-             $query = $connection->getDBConnection()->prepare("SELECT email FROM users WHERE email = :email_from_form;");
-
-             $query->bindValue(":email_from_form", $emailFromForm, PDO::PARAM_STR);
-
-             $query->execute();
-
-             if ($query->rowCount() > 0) {
-                 while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
-                     if ($emailFromForm == $row['email']) {
-                         $emailErrors = $errors['email_errors']['already_exist'];
-                     }
-                 }
-             }
-
-             $connection = null;
-
-         } catch (PDOException $e) {
-             die($e->getMessage());
-         }
-     }
 
 
     if (empty($loginErrors) && empty($repeatPasswordErrors) && empty($emailErrors)) {
@@ -157,22 +124,22 @@ if(isset($_POST['reg_button'])) {
 
 <div class="row login_menu">
 
-    <form method="post" action="<?php $_SERVER['PHP_SELF']?>" class="mx-auto">
+    <form method="POST" action="<?php $_SERVER['PHP_SELF']?>" class="mx-auto">
         <div class="form-group">
             <label for="login">Логін</label>
-            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" /*minlength="3" maxlength="30" required*/ value="<?php if(isset($_POST['login'])){echo $_POST['login'];} ?>" ><div class="text-warning input_warnings"><?php if(isset($validation))  echo $validation->error['login_errors']?></div>
+            <input type="text" class="form-control" id="login" placeholder="Введіть логін" name="login" minlength="3" maxlength="30" value="<?php if(isset($_POST['login'])) echo $_POST['login']; ?>" ><div class="text-warning input_warnings"><?php if(isset($validation) && $validation->HasErrors("login_errors")) echo $validation->getErrors()["login_errors"];?></div>
         </div>
         <div class="form-group">
             <label for="password">Пароль</label>
-            <input type="password" class="form-control" id="password" placeholder="Пароль" name="password" maxlength="30" minlength="3" ><div class="text-warning input_warnings"></div>
+            <input type="password" class="form-control" id="password" placeholder="Пароль" name="password" maxlength="30" minlength="3" ><div class="text-warning input_warnings"><?php if(isset($validation) && $validation->HasErrors("password_errors")) echo $validation->getErrors()["password_errors"];?></div>
         </div>
         <div class="form-group">
             <label for="password_verify">Пароль ще раз</label>
-            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30" ><div class="text-warning input_warnings"></div>
+            <input type="password" class="form-control" id="password_verify" placeholder="Введіть пароль ще раз" name="password_verify" maxlength="30" ><div class="text-warning input_warnings"><?php if(isset($validation) && $validation->HasErrors("password_verify_errors")) echo $validation->getErrors()["password_verify_errors"];?></div>
         </div>
             <div class="form-group">
             <label for="email">Емейл (Якщо забудете пароль, ми надішлемо його на цю адресу)</label>
-            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>" ><div class="text-warning input_warnings"></div>
+            <input type="email" class="form-control" id="email" placeholder="Введіть емейл" name="email" maxlength="30" value="<?php if(isset($_POST['email'])){echo $_POST['email'];}?>" ><div class="text-warning input_warnings"><?php if(isset($validation) && $validation->HasErrors("email_errors")) echo $validation->getErrors()["email_errors"];?></div>
             </div>
         <button id="registration_button" type="submit" class="btn btn-outline-success" name="reg_button" data-toggle="tooltip" data-placement="right" title="Натисніть, щоб зареєструватися">Зареєструватися</button>
     </form>

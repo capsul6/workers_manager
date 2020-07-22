@@ -15,6 +15,7 @@ nav ul {
     list-style: none;
     padding: 0px 40px 0px 40px;
     margin-top: 16px !important;
+    text-align: center;
 }
 
 .nav_center a {
